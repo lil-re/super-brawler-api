@@ -1,11 +1,14 @@
 import { Module } from '@nestjs/common';
+import { battleProviders } from './battle.providers';
 import { BattlesService } from './battles.service';
 import { BattlesController } from './battles.controller';
 import { DatabaseModule } from '../database/database.module';
-import { battleProviders } from './battle.providers';
+import { EventsModule } from '../events/events.module';
+import { PlayersModule } from '../players/players.module';
+import { BrawlersModule } from '../brawlers/brawlers.module';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, EventsModule, PlayersModule, BrawlersModule],
   controllers: [BattlesController],
   providers: [...battleProviders, BattlesService],
 })

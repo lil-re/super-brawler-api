@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { Battle } from './entities/battle.entity';
+import { Battle } from './battle.entity';
 
 export const battleProviders = [
   {

@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Battle } from './battle.entity';
+import { Battle } from '../battles/battle.entity';
 
 @Entity()
 export class Event {

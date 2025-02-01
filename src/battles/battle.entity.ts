@@ -5,16 +5,13 @@ import {
   ManyToOne,
   OneToMany,
 } from 'typeorm';
-import { Player } from './player.entity';
-import { Event } from './event.entity';
+import { Player } from '../players/player.entity';
+import { Event } from '../events/event.entity';
 
 @Entity()
 export class Battle {
   @PrimaryGeneratedColumn()
   id: number;
-
-  @Column()
-  playerTag: string;
 
   @Column({ nullable: true })
   starPlayerTag: string;
@@ -26,7 +23,7 @@ export class Battle {
   duration: number;
 
   @Column({ nullable: true })
-  result: 'victory' | 'defeat';
+  result: string;
 
   @Column({ nullable: true })
   rank: number;

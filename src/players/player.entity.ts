@@ -6,8 +6,8 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import { Battle } from './battle.entity';
-import { Brawler } from './brawler.entity';
+import { Battle } from '../battles/battle.entity';
+import { Brawler } from '../brawlers/brawler.entity';
 
 @Entity()
 export class Player {
