@@ -3,11 +3,8 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToOne,
-  JoinColumn,
 } from 'typeorm';
 import { Battle } from '../battles/battle.entity';
-import { Brawler } from '../brawlers/brawler.entity';
 
 @Entity()
 export class Player {
@@ -20,10 +17,18 @@ export class Player {
   @Column()
   name: string;
 
+  @Column()
+  brawlerId: number;
+
+  @Column()
+  brawlerName: string;
+
+  @Column()
+  power: number;
+
+  @Column()
+  trophies: number;
+
   @ManyToOne(() => Battle, (battle) => battle.players)
   battle: Battle;
-
-  @OneToOne(() => Brawler)
-  @JoinColumn()
-  brawler: Brawler;
 }

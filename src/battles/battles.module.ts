@@ -5,10 +5,9 @@ import { BattlesController } from './battles.controller';
 import { DatabaseModule } from '../database/database.module';
 import { EventsModule } from '../events/events.module';
 import { PlayersModule } from '../players/players.module';
-import { BrawlersModule } from '../brawlers/brawlers.module';
 
 @Module({
-  imports: [DatabaseModule, EventsModule, PlayersModule, BrawlersModule],
+  imports: [DatabaseModule, EventsModule, PlayersModule],
   controllers: [BattlesController],
   providers: [...battleProviders, BattlesService],
 })

@@ -1,11 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { CreateBattleDto } from './dto/create-battle.dto';
 import { UpdateBattleDto } from './dto/update-battle.dto';
 import { Repository } from 'typeorm';
 import { Battle } from './battle.entity';
 import { Event } from '../events/event.entity';
 import { Player } from '../players/player.entity';
-import { Brawler } from '../brawlers/brawler.entity';
 
 @Injectable()
 export class BattlesService {
@@ -18,9 +16,6 @@ export class BattlesService {
 
     @Inject('PLAYER_REPOSITORY')
     private playerRepository: Repository<Player>,
-
-    @Inject('BRAWLER_REPOSITORY')
-    private brawlerRepository: Repository<Brawler>,
   ) {}
 
   async create(payload) {
@@ -30,15 +25,15 @@ export class BattlesService {
     // Handle Battle
     const battle = await this.handleNewBattle(payload, event);
 
-    // Handle Players and Brawlers
-    await this.handleNewPlayersAndBrawlers(payload, battle);
+    // Handle Players
+    await this.handleNewPlayers(payload, battle);
 
     return battle;
   }
 
   async findAll(): Promise<Battle[]> {
     return this.battleRepository.find({
-      relations: ['event', 'players', 'players.brawler'],
+      relations: ['event', 'players'],
     });
   }
 
@@ -104,40 +99,18 @@ export class BattlesService {
     return battle;
   }
 
-  private async handleNewPlayersAndBrawlers(payload, battle: Battle) {
+  private async handleNewPlayers(payload, battle: Battle) {
     for (let playerPayload of payload.battle.players) {
-      // Handle Brawler
-      const brawler = await this.handleNewBrawler(playerPayload);
-
-      // Handle Brawler
-      await this.handleNewPlayer(playerPayload, battle, brawler);
-    }
-  }
-
-  private async handleNewBrawler(playerPayload) {
-    const newBrawler = this.brawlerRepository.create({
-      brawlerId: playerPayload.brawler.id,
-      name: playerPayload.brawler.name,
-      power: playerPayload.brawler.power,
-      trophies: playerPayload.brawler.trophies,
-    });
-    const brawler = await this.brawlerRepository.save(newBrawler);
-    return brawler;
-  }
-
-  private async handleNewPlayer(playerPayload, battle: Battle, brawler: Brawler) {
-    let player = await this.playerRepository.findOneBy({
-      tag: playerPayload.tag,
-    });
-
-    if (!player) {
       const newPlayer = this.playerRepository.create({
         tag: playerPayload.tag,
         name: playerPayload.name,
+        brawlerId: playerPayload.brawler.id,
+        brawlerName: playerPayload.brawler.name,
+        power: playerPayload.brawler.power,
+        trophies: playerPayload.brawler.trophies,
         battle,
-        brawler,
       });
-      player = await this.playerRepository.save(newPlayer);
+      await this.playerRepository.save(newPlayer);
     }
   }
 
