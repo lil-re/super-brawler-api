@@ -7,6 +7,8 @@ import {
 } from 'typeorm';
 import { Player } from '../players/player.entity';
 import { Event } from '../events/event.entity';
+import { User } from '../users/user.entity';
+import { Profile } from '../profiles/profile.entity';
 
 @Entity()
 export class Battle {
@@ -33,6 +35,9 @@ export class Battle {
 
   @Column()
   type: string;
+
+  @ManyToOne(() => Profile, (profile) => profile.battles)
+  user: Profile;
 
   @ManyToOne(() => Event, (event) => event.battles)
   event: Event;

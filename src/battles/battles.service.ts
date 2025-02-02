@@ -55,7 +55,6 @@ export class BattlesService {
     if (!battle) {
       throw new Error(`Battle with id ${id} not found`);
     }
-
     return this.battleRepository.save(battle);
   }
 
