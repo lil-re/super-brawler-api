@@ -1,15 +1,36 @@
-import { CreateEventDto } from '../../events/dto/create-event.dto';
-import { CreatePlayerDto } from '../../players/dto/create-player.dto';
+export class CreateBattleEventDto {
+  readonly id: number;
+  readonly mode: string;
+  readonly map: string;
+}
 
-export class CreateBattleDto {
-  readonly playerTag: string;
-  readonly starPlayerTag: string;
-  readonly battleTime: Date;
+export class CreateBattleContentDto {
+  readonly starPlayer: CreateBattlePlayerDto;
+  readonly mode: string;
   readonly duration: number;
   readonly result: string;
   readonly rank: number;
   readonly trophyChange: number;
   readonly type: string;
-  readonly event: CreateEventDto;
-  readonly players: Array<CreatePlayerDto>;
+  readonly players: Array<CreateBattlePlayerDto>;
+}
+
+export class CreateBattlePlayerDto {
+  readonly tag: string;
+  readonly name: string;
+  readonly brawler: CreateBattleBrawlerDto;
+}
+
+export class CreateBattleBrawlerDto {
+  readonly id: number;
+  readonly name: string;
+  readonly power: number;
+  readonly trophies: number;
+}
+
+export class CreateBattleDto {
+  readonly profileTag: string;
+  readonly battleTime: string;
+  readonly event: CreateBattleEventDto;
+  readonly battle: CreateBattleContentDto;
 }

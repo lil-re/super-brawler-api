@@ -5,10 +5,12 @@ import { BattlesController } from './battles.controller';
 import { DatabaseModule } from '../database/database.module';
 import { EventsModule } from '../events/events.module';
 import { PlayersModule } from '../players/players.module';
+import { ProfilesModule } from '../profiles/profiles.module';
 
 @Module({
-  imports: [DatabaseModule, EventsModule, PlayersModule],
+  imports: [DatabaseModule, ProfilesModule, EventsModule, PlayersModule],
   controllers: [BattlesController],
   providers: [...battleProviders, BattlesService],
+  exports: [...battleProviders, BattlesService],
 })
 export class BattlesModule {}

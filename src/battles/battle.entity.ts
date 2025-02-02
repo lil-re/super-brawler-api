@@ -37,7 +37,7 @@ export class Battle {
   type: string;
 
   @ManyToOne(() => Profile, (profile) => profile.battles)
-  user: Profile;
+  profile: Profile;
 
   @ManyToOne(() => Event, (event) => event.battles)
   event: Event;

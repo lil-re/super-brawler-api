@@ -1,4 +1,3 @@
-import * as bcrypt from 'bcrypt';
 import { Inject, Injectable } from '@nestjs/common';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -13,7 +12,6 @@ export class ProfilesService {
   ) {}
 
   async create(createProfileDto: CreateProfileDto) {
-    console.log(createProfileDto.userId);
     const profile = this.profileRepository.create({
       ...createProfileDto,
       user: {
@@ -36,6 +34,15 @@ export class ProfilesService {
 
     if (!profile) {
       throw new Error(`Profile with id ${id} not found`);
+    }
+    return profile;
+  }
+
+  async findOneByTag(tag: string) {
+    const profile = await this.profileRepository.findOneBy({ tag });
+
+    if (!profile) {
+      throw new Error(`Player with tag ${tag} not found`);
     }
     return profile;
   }
