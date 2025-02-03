@@ -17,7 +17,7 @@ export class EventsService {
     });
 
     if (event) {
-      throw new Error(`Event already exists`);
+      return event;
     }
 
     const newEvent = this.eventRepository.create(createEventDto);

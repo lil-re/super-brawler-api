@@ -115,6 +115,39 @@ export class BattlesService {
     createBattleDto: CreateBattleDto,
     battle: Battle,
   ) {
+    if (createBattleDto.battle.teams) {
+      await this.handleNewTeamPlayers(createBattleDto, battle);
+    } else {
+      await this.handleNewSoloPlayers(createBattleDto, battle);
+    }
+  }
+
+  private async handleNewTeamPlayers(
+    createBattleDto: CreateBattleDto,
+    battle: Battle,
+  ) {
+    for (let i = 0; i < createBattleDto.battle.teams.length; i++) {
+      const createBattleTeamDto = createBattleDto.battle.teams[i];
+
+      for (const createBattlePlayerDto of createBattleTeamDto) {
+        await this.playersService.create({
+          tag: createBattlePlayerDto.tag,
+          name: createBattlePlayerDto.name,
+          brawlerId: createBattlePlayerDto.brawler.id,
+          brawlerName: createBattlePlayerDto.brawler.name,
+          power: createBattlePlayerDto.brawler.power,
+          trophies: createBattlePlayerDto.brawler.trophies,
+          battleId: battle.id,
+          team: i + 1,
+        });
+      }
+    }
+  }
+
+  private async handleNewSoloPlayers(
+    createBattleDto: CreateBattleDto,
+    battle: Battle,
+  ) {
     for (const createBattlePlayerDto of createBattleDto.battle.players) {
       await this.playersService.create({
         tag: createBattlePlayerDto.tag,

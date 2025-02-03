@@ -1,9 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Battle } from '../battles/battle.entity';
 
 @Entity()
@@ -28,6 +23,9 @@ export class Player {
 
   @Column()
   trophies: number;
+
+  @Column({ nullable: true })
+  team: number;
 
   @ManyToOne(() => Battle, (battle) => battle.players)
   battle: Battle;

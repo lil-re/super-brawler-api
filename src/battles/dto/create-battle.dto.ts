@@ -12,7 +12,8 @@ export class CreateBattleContentDto {
   readonly rank: number;
   readonly trophyChange: number;
   readonly type: string;
-  readonly players: Array<CreateBattlePlayerDto>;
+  readonly players?: Array<CreateBattlePlayerDto>;
+  readonly teams?: Array<Array<CreateBattlePlayerDto>>;
 }
 
 export class CreateBattlePlayerDto {
