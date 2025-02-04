@@ -1,16 +1,21 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { UpdateBattleDto } from './dto/update-battle.dto';
+import * as process from 'node:process';
+import ky from 'ky';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { Repository } from 'typeorm';
 import { Battle } from './battle.entity';
 import { Event } from '../events/event.entity';
 import { EventsService } from '../events/events.service';
 import { PlayersService } from '../players/players.service';
 import { ProfilesService } from '../profiles/profiles.service';
+import { UpdateBattleDto } from './dto/update-battle.dto';
 import { CreateBattleDto } from './dto/create-battle.dto';
 import { Profile } from '../profiles/profile.entity';
 
 @Injectable()
 export class BattlesService {
+  private readonly logger = new Logger(BattlesService.name);
+
   constructor(
     @Inject('BATTLE_REPOSITORY')
     private battleRepository: Repository<Battle>,
@@ -21,6 +26,43 @@ export class BattlesService {
 
     private profilesService: ProfilesService,
   ) {}
+
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async handleCron() {
+    const profiles = await this.profilesService.findAll();
+
+    for (const profile of profiles) {
+      const profileTag = encodeURIComponent(profile.tag);
+      const response = await ky.get(
+        `${process.env.BRAWL_STARS_API_URL}/players/${profileTag}/battlelog`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.BRAWL_STARS_API_KEY}`,
+          },
+        },
+      );
+
+      const data = await response.json<{
+        items: Array<CreateBattleDto>;
+      }>();
+
+      if (data.items) {
+        for (const item of data.items) {
+          try {
+            const battle = await this.create(item);
+
+            if (battle.id) {
+              this.logger.debug(
+                `Add one battle for player with tag ${profile.tag}`,
+              );
+            }
+          } catch (e) {
+            this.logger.debug(e);
+          }
+        }
+      }
+    }
+  }
 
   async create(createBattleDto: CreateBattleDto) {
     // Handle Profile
@@ -34,6 +76,10 @@ export class BattlesService {
 
     // Handle Event
     const event = await this.handleNewEvent(createBattleDto);
+
+    if (!event) {
+      throw new Error(`Invalid event`);
+    }
 
     // Handle Battle
     const battle = await this.handleNewBattle(createBattleDto, profile, event);
@@ -81,11 +127,14 @@ export class BattlesService {
   }
 
   private async handleNewEvent(createBattleDto: CreateBattleDto) {
-    return this.eventsService.create({
-      eventId: createBattleDto.event.id,
-      mode: createBattleDto.event.mode,
-      map: createBattleDto.event.map,
-    });
+    if (createBattleDto?.event?.id) {
+      return this.eventsService.create({
+        eventId: createBattleDto.event.id,
+        mode: createBattleDto.event.mode,
+        map: createBattleDto.event.map,
+      });
+    }
+    return null;
   }
 
   private async handleNewBattle(
