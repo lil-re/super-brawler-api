@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm';
+import * as process from 'node:process';
 
 export const databaseProviders = [
   {
@@ -6,13 +7,13 @@ export const databaseProviders = [
     useFactory: async () => {
       const dataSource = new DataSource({
         type: 'mysql',
-        host: 'localhost',
-        port: 3306,
-        username: 'root',
-        password: '',
-        database: 'super_brawler_db',
+        host: process.env.DB_HOST,
+        port: Number(process.env.DB_PORT),
+        username: process.env.DB_USERNAME,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_DATABASE,
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-        synchronize: true,
+        synchronize: Boolean(process.env.DB_SYNCHRONIZE),
       });
 
       return dataSource.initialize();

@@ -1,7 +1,4 @@
-import * as process from 'node:process';
-import ky from 'ky';
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Inject, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Battle } from './battle.entity';
 import { Event } from '../events/event.entity';
@@ -14,8 +11,6 @@ import { Profile } from '../profiles/profile.entity';
 
 @Injectable()
 export class BattlesService {
-  private readonly logger = new Logger(BattlesService.name);
-
   constructor(
     @Inject('BATTLE_REPOSITORY')
     private battleRepository: Repository<Battle>,
@@ -27,67 +22,30 @@ export class BattlesService {
     private profilesService: ProfilesService,
   ) {}
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
-  async handleCron() {
-    const profiles = await this.profilesService.findAll();
-
-    for (const profile of profiles) {
-      const profileTag = encodeURIComponent(profile.tag);
-      const response = await ky.get(
-        `${process.env.BRAWL_STARS_API_URL}/players/${profileTag}/battlelog`,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.BRAWL_STARS_API_KEY}`,
-          },
-        },
+  async create(createBattleDto: CreateBattleDto) {
+    try {
+      // Handle Profile
+      const profile = await this.profilesService.findOneByTag(
+        createBattleDto.profileTag,
       );
 
-      const data = await response.json<{
-        items: Array<CreateBattleDto>;
-      }>();
+      // Handle Event
+      const event = await this.handleNewEvent(createBattleDto);
 
-      if (data.items) {
-        for (const item of data.items) {
-          try {
-            const battle = await this.create(item);
+      // Handle Battle
+      const battle = await this.handleNewBattle(
+        createBattleDto,
+        profile,
+        event,
+      );
 
-            if (battle.id) {
-              this.logger.debug(
-                `Add one battle for player with tag ${profile.tag}`,
-              );
-            }
-          } catch (e) {
-            this.logger.debug(e);
-          }
-        }
-      }
+      // Handle Players
+      await this.handleNewPlayers(createBattleDto, battle);
+
+      return battle;
+    } catch (e) {
+      throw e;
     }
-  }
-
-  async create(createBattleDto: CreateBattleDto) {
-    // Handle Profile
-    const profile = await this.profilesService.findOneByTag(
-      createBattleDto.profileTag,
-    );
-
-    if (!profile) {
-      throw new Error(`Profile not found`);
-    }
-
-    // Handle Event
-    const event = await this.handleNewEvent(createBattleDto);
-
-    if (!event) {
-      throw new Error(`Invalid event`);
-    }
-
-    // Handle Battle
-    const battle = await this.handleNewBattle(createBattleDto, profile, event);
-
-    // Handle Players
-    await this.handleNewPlayers(createBattleDto, battle);
-
-    return battle;
   }
 
   async findAll(): Promise<Battle[]> {
@@ -133,8 +91,10 @@ export class BattlesService {
         mode: createBattleDto.event.mode,
         map: createBattleDto.event.map,
       });
+    } else {
+      // TODO => Handle events with community maps (those without ID)
+      throw new Error(`Invalid event`);
     }
-    return null;
   }
 
   private async handleNewBattle(
@@ -142,6 +102,15 @@ export class BattlesService {
     profile: Profile,
     event: Event,
   ) {
+    const battle = await this.battleRepository.findOneBy({
+      profile,
+      battleTime: this.parseDate(createBattleDto.battleTime),
+    });
+
+    if (battle) {
+      throw new Error(`Battle has already been stored`);
+    }
+
     const newBattle = this.battleRepository.create({
       starPlayerTag: createBattleDto.battle?.starPlayer?.tag,
       battleTime: this.parseDate(createBattleDto.battleTime),
@@ -157,6 +126,10 @@ export class BattlesService {
         id: event.id,
       },
     });
+
+    if (!newBattle) {
+      throw new Error(`Battle could not be created`);
+    }
     return this.battleRepository.save(newBattle);
   }
 

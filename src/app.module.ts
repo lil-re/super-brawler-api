@@ -7,6 +7,7 @@ import { ProfilesModule } from './profiles/profiles.module';
 import { AuthModule } from './auth/auth.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from '@nestjs/config';
+import { CronModule } from './cron/cron.module';
 
 @Module({
   controllers: [AppController],
@@ -18,6 +19,7 @@ import { ConfigModule } from '@nestjs/config';
     AuthModule,
     ScheduleModule.forRoot(),
     ConfigModule.forRoot(),
+    CronModule,
   ],
 })
 export class AppModule {}
