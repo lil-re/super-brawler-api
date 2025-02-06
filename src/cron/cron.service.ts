@@ -18,7 +18,7 @@ export class CronService {
   ) {}
 
   @Cron(CronExpression.EVERY_10_SECONDS)
-  async handleCron() {
+  async battlesCron() {
     const profiles = await this.profilesService.findAll();
 
     for (const profile of profiles) {

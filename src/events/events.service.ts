@@ -11,9 +11,14 @@ export class EventsService {
     private eventRepository: Repository<Event>,
   ) {}
 
+  public static COMMUNITY_ID = null;
+  public static COMMUNITY_MAP = 'community';
+
   async create(createEventDto: CreateEventDto) {
     const event = await this.eventRepository.findOneBy({
       eventId: createEventDto.eventId,
+      mode: createEventDto.mode,
+      map: createEventDto.map,
     });
 
     if (event) {

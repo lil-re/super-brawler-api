@@ -92,8 +92,12 @@ export class BattlesService {
         map: createBattleDto.event.map,
       });
     } else {
-      // TODO => Handle events with community maps (those without ID)
-      throw new Error(`Invalid event`);
+      return this.eventsService.create({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        eventId: EventsService.COMMUNITY_ID,
+        mode: createBattleDto.battle.mode,
+        map: EventsService.COMMUNITY_MAP,
+      });
     }
   }
 
