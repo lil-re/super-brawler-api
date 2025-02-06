@@ -23,29 +23,21 @@ export class BattlesService {
   ) {}
 
   async create(createBattleDto: CreateBattleDto) {
-    try {
-      // Handle Profile
-      const profile = await this.profilesService.findOneByTag(
-        createBattleDto.profileTag,
-      );
+    // Handle Profile
+    const profile = await this.profilesService.findOneByTag(
+      createBattleDto.profileTag,
+    );
 
-      // Handle Event
-      const event = await this.handleNewEvent(createBattleDto);
+    // Handle Event
+    const event = await this.handleNewEvent(createBattleDto);
 
-      // Handle Battle
-      const battle = await this.handleNewBattle(
-        createBattleDto,
-        profile,
-        event,
-      );
+    // Handle Battle
+    const battle = await this.handleNewBattle(createBattleDto, profile, event);
 
-      // Handle Players
-      await this.handleNewPlayers(createBattleDto, battle);
+    // Handle Players
+    await this.handleNewPlayers(createBattleDto, battle);
 
-      return battle;
-    } catch (e) {
-      throw e;
-    }
+    return battle;
   }
 
   async findAll(): Promise<Battle[]> {

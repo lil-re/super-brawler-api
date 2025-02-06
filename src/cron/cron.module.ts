@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { CronService } from './cron.service';
-import { BattlesModule } from '../battles/battles.module';
 import { ProfilesModule } from '../profiles/profiles.module';
+import { BattlesModule } from '../battles/battles.module';
+import { StatsModule } from '../stats/stats.module';
 
 @Module({
-  imports: [BattlesModule, ProfilesModule],
+  imports: [ProfilesModule, BattlesModule, StatsModule],
   providers: [CronService],
 })
 export class CronModule {}
