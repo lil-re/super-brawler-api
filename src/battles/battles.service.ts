@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
+import dayjs, { Dayjs } from 'dayjs';
 import { Battle } from './battle.entity';
 import { Event } from '../events/event.entity';
 import { EventsService } from '../events/events.service';
@@ -8,6 +9,7 @@ import { ProfilesService } from '../profiles/profiles.service';
 import { UpdateBattleDto } from './dto/update-battle.dto';
 import { CreateBattleDto } from './dto/create-battle.dto';
 import { Profile } from '../profiles/profile.entity';
+import { SearchBattleDto } from './dto/search-battle.dto';
 
 @Injectable()
 export class BattlesService {
@@ -189,5 +191,62 @@ export class BattlesService {
 
     const formattedDate = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}.${match[7]}Z`;
     return new Date(formattedDate);
+  }
+
+  async search(filters: SearchBattleDto) {
+    const { date, dateRange, eventId, playerTag, brawlerName } = filters;
+
+    let query = this.battleRepository
+      .createQueryBuilder('battle')
+      .innerJoin('battle.event', 'event')
+      .addSelect('event.map')
+      .addSelect('event.mode')
+      .innerJoin('battle.players', 'player')
+      .addSelect('player.brawlerName')
+      .andWhere('player.tag = :playerTag', { playerTag });
+
+    // Filter by exact date
+    if (date) {
+      query = query.andWhere('DATE(battle.battleTime) = :date', { date });
+    }
+
+    // Filter by date range
+    else if (dateRange) {
+      const today = dayjs().startOf('day');
+      let startOfRange: Dayjs;
+
+      switch (dateRange) {
+        case 'thisWeek':
+          startOfRange = today.clone().startOf('week');
+          break;
+        case 'thisMonth':
+          startOfRange = today.clone().startOf('month');
+          break;
+        case 'thisYear':
+          startOfRange = today.clone().startOf('year');
+          break;
+        default:
+          startOfRange = today;
+      }
+
+      query = query.andWhere('battle.battleTime >= :startOfRange', {
+        startOfRange: startOfRange.toDate(),
+      });
+    }
+
+    // Filter by event
+    if (eventId) {
+      query = query.andWhere('event.id = :eventId', { eventId });
+    }
+
+    // Filter by brawler name
+    if (brawlerName) {
+      query = query.andWhere('player.brawlerName = :brawlerName', {
+        brawlerName,
+      });
+    }
+
+    // Execute the query and return results
+    return await query.getMany();
   }
 }

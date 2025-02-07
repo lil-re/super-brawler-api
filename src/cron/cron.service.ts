@@ -21,61 +21,61 @@ export class CronService {
     private statsService: StatsService,
   ) {}
 
-  // @Cron(CronExpression.EVERY_10_SECONDS)
-  // async battlesCron() {
-  //   const profiles = await this.profilesService.findAll();
-  //
-  //   for (const profile of profiles) {
-  //     const data = await this.handleBattlesCronQuery(profile);
-  //     await this.handleBattlesCronData(profile, data.items);
-  //   }
-  // }
-  //
-  // private async handleBattlesCronQuery(profile: Profile) {
-  //   try {
-  //     const profileTag = encodeURIComponent(profile.tag);
-  //     const response = await ky.get(
-  //       `${process.env.BRAWL_STARS_API_URL}/players/${profileTag}/battlelog`,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${process.env.BRAWL_STARS_API_KEY}`,
-  //         },
-  //       },
-  //     );
-  //
-  //     return response.json<{
-  //       items: Array<CreateBattleDto>;
-  //     }>();
-  //   } catch {
-  //     this.logger.debug(
-  //       `Error while fetching latest battles for profile with tag ${profile.tag}`,
-  //     );
-  //     return null;
-  //   }
-  // }
-  //
-  // private async handleBattlesCronData(
-  //   profile: Profile,
-  //   items: Array<CreateBattleDto>,
-  // ) {
-  //   if (items) {
-  //     for (const item of items) {
-  //       try {
-  //         const battle = await this.battlesService.create(item);
-  //
-  //         if (battle.id) {
-  //           this.logger.debug(
-  //             `Add one battle for player with tag ${profile.tag}`,
-  //           );
-  //         }
-  //       } catch (e) {
-  //         this.logger.debug(e);
-  //       }
-  //     }
-  //   }
-  // }
+  @Cron(CronExpression.EVERY_30_MINUTES)
+  async battlesCron() {
+    const profiles = await this.profilesService.findAll();
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+    for (const profile of profiles) {
+      const data = await this.handleBattlesCronQuery(profile);
+      await this.handleBattlesCronData(profile, data.items);
+    }
+  }
+
+  private async handleBattlesCronQuery(profile: Profile) {
+    try {
+      const profileTag = encodeURIComponent(profile.tag);
+      const response = await ky.get(
+        `${process.env.BRAWL_STARS_API_URL}/players/${profileTag}/battlelog`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.BRAWL_STARS_API_KEY}`,
+          },
+        },
+      );
+
+      return response.json<{
+        items: Array<CreateBattleDto>;
+      }>();
+    } catch {
+      this.logger.debug(
+        `Error while fetching latest battles for profile with tag ${profile.tag}`,
+      );
+      return null;
+    }
+  }
+
+  private async handleBattlesCronData(
+    profile: Profile,
+    items: Array<CreateBattleDto>,
+  ) {
+    if (items) {
+      for (const item of items) {
+        try {
+          const battle = await this.battlesService.create(item);
+
+          if (battle.id) {
+            this.logger.debug(
+              `Add one battle for player with tag ${profile.tag}`,
+            );
+          }
+        } catch (e) {
+          this.logger.debug(e);
+        }
+      }
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_5AM)
   async statsCron() {
     const profiles = await this.profilesService.findAll();
 

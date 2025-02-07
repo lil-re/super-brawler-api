@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { BattlesService } from './battles.service';
 import { CreateBattleDto } from './dto/create-battle.dto';
 import { UpdateBattleDto } from './dto/update-battle.dto';
+import { SearchBattleDto } from './dto/search-battle.dto';
 
 @Controller('battles')
 export class BattlesController {
@@ -20,6 +21,11 @@ export class BattlesController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.battlesService.findOne(+id);
+  }
+
+  @Post('/search')
+  search(@Body() searchBattleDto: SearchBattleDto) {
+    return this.battlesService.search(searchBattleDto);
   }
 
   @Patch(':id')
