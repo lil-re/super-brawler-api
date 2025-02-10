@@ -12,6 +12,7 @@ import { StatsService } from './stats.service';
 import { CreateStatDto } from './dto/create-stat.dto';
 import { UpdateStatDto } from './dto/update-stat.dto';
 import { AuthGuard } from '../auth/auth.guard';
+import { FilterStatDto } from './dto/filter-stat.dto';
 
 @Controller('stats')
 export class StatsController {
@@ -33,6 +34,12 @@ export class StatsController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.statsService.findOne(+id);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/data')
+  search(@Body() filterStatDto: FilterStatDto) {
+    return this.statsService.findData(filterStatDto);
   }
 
   @UseGuards(AuthGuard)

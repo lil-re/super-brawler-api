@@ -4,6 +4,7 @@ import { UpdateStatDto } from './dto/update-stat.dto';
 import { Repository } from 'typeorm';
 import { Stat } from './stat.entity';
 import { ProfilesService } from '../profiles/profiles.service';
+import { FilterStatDto } from './dto/filter-stat.dto';
 
 @Injectable()
 export class StatsService {
@@ -72,5 +73,47 @@ export class StatsService {
       throw new Error(`Stat with id ${id} not found`);
     }
     await this.statRepository.remove(stat);
+  }
+
+  async findData(filters: FilterStatDto) {
+    return this.statRepository
+      .createQueryBuilder('stat')
+      .innerJoin(
+        (subQuery) => {
+          subQuery
+            .select('MAX(stat.createdAt)', 'max_createdAt')
+            .from(Stat, 'stat');
+
+          if (filters.dateRange === 'thisMonth') {
+            subQuery
+              .where('stat.createdAt >= CURDATE() - INTERVAL 30 DAY')
+              .groupBy('DAY(stat.createdAt)');
+          } else if (filters.dateRange === 'thisYear') {
+            subQuery
+              .where('stat.createdAt >= CURDATE() - INTERVAL 12 MONTH')
+              .groupBy('MONTH(stat.createdAt)');
+          } else if (filters.dateRange === 'last10Years') {
+            subQuery
+              .where('stat.createdAt >= CURDATE() - INTERVAL 10 YEAR')
+              .groupBy('YEAR(stat.createdAt)');
+          } else {
+            subQuery
+              .where('stat.createdAt >= CURDATE() - INTERVAL 7 DAY')
+              .groupBy('DAY(stat.createdAt)');
+          }
+          return subQuery;
+        },
+        'latest_stats',
+        'stat.createdAt = latest_stats.max_createdAt',
+      )
+      .orderBy('stat.createdAt', 'DESC')
+      .select([
+        'stat.trophies',
+        'stat.trioVictories',
+        'stat.duoVictories',
+        'stat.soloVictories',
+        'stat.createdAt',
+      ])
+      .getMany();
   }
 }

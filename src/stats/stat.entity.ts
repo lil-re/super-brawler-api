@@ -35,4 +35,7 @@ export class Stat {
 
   @ManyToOne(() => Profile, (profile) => profile.stats)
   profile: Profile;
+
+  @Column({ default: () => 'NOW()' })
+  createdAt: Date;
 }

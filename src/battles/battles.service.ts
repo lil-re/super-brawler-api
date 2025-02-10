@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import dayjs, { Dayjs } from 'dayjs';
 import { Battle } from './battle.entity';
 import { Event } from '../events/event.entity';
@@ -196,6 +196,7 @@ export class BattlesService {
   async search(filters: SearchBattleDto) {
     const { date, dateRange, eventId, playerTag, brawlerName } = filters;
 
+    // Base query
     let query = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('battle.event', 'event')
@@ -206,11 +207,28 @@ export class BattlesService {
       .andWhere('player.tag = :playerTag', { playerTag });
 
     // Filter by exact date
-    if (date) {
-      query = query.andWhere('DATE(battle.battleTime) = :date', { date });
-    }
+    query = this.searchByDate(query, date, dateRange);
 
-    // Filter by date range
+    // Filter by event
+    query = this.searchByEvent(query, eventId);
+
+    // Filter by brawler name
+    query = this.searchByBrawler(query, brawlerName);
+
+    // Execute the query and return results
+    return await query.getMany();
+  }
+
+  searchByDate(
+    query: SelectQueryBuilder<Battle>,
+    date: string,
+    dateRange: string,
+  ): SelectQueryBuilder<Battle> {
+    // Filter by exact date
+    if (date) {
+      query.andWhere('DATE(battle.battleTime) = :date', { date });
+    }
+    // Or filter by date range
     else if (dateRange) {
       const today = dayjs().startOf('day');
       let startOfRange: Dayjs;
@@ -233,20 +251,28 @@ export class BattlesService {
         startOfRange: startOfRange.toDate(),
       });
     }
+    return query;
+  }
 
-    // Filter by event
+  searchByEvent(
+    query: SelectQueryBuilder<Battle>,
+    eventId: number,
+  ): SelectQueryBuilder<Battle> {
     if (eventId) {
       query = query.andWhere('event.id = :eventId', { eventId });
     }
+    return query;
+  }
 
-    // Filter by brawler name
+  searchByBrawler(
+    query: SelectQueryBuilder<Battle>,
+    brawlerName: string,
+  ): SelectQueryBuilder<Battle> {
     if (brawlerName) {
       query = query.andWhere('player.brawlerName = :brawlerName', {
         brawlerName,
       });
     }
-
-    // Execute the query and return results
-    return await query.getMany();
+    return query;
   }
 }
