@@ -75,7 +75,7 @@ export class StatsService {
     await this.statRepository.remove(stat);
   }
 
-  async findData(filters: FilterStatDto) {
+  async dashboard(filters: FilterStatDto) {
     return this.statRepository
       .createQueryBuilder('stat')
       .innerJoin(

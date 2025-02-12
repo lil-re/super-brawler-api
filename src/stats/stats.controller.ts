@@ -37,9 +37,9 @@ export class StatsController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('/data')
-  search(@Body() filterStatDto: FilterStatDto) {
-    return this.statsService.findData(filterStatDto);
+  @Post('/dashboard')
+  dashboard(@Body() filterStatDto: FilterStatDto) {
+    return this.statsService.dashboard(filterStatDto);
   }
 
   @UseGuards(AuthGuard)

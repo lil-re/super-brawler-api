@@ -6,13 +6,16 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
+  UseGuards, Request,
 } from '@nestjs/common';
 import { BattlesService } from './battles.service';
 import { CreateBattleDto } from './dto/create-battle.dto';
 import { UpdateBattleDto } from './dto/update-battle.dto';
 import { SearchBattleDto } from './dto/search-battle.dto';
 import { AuthGuard } from '../auth/auth.guard';
+import { FilterStatDto } from '../stats/dto/filter-stat.dto';
+import { Battle } from './battle.entity';
+import { FilterBattleDto } from './dto/filter-battle.dto';
 
 @Controller('battles')
 export class BattlesController {
@@ -41,6 +44,14 @@ export class BattlesController {
   search(@Body() searchBattleDto: SearchBattleDto) {
     return this.battlesService.search(searchBattleDto);
   }
+
+  @UseGuards(AuthGuard)
+  @Post('/dashboard')
+  dashboard(@Request() req, @Body() battleStatDto: FilterBattleDto) {
+    console.log(req.user);
+    return this.battlesService.dashboard(battleStatDto);
+  }
+
 
   @UseGuards(AuthGuard)
   @Patch(':id')
