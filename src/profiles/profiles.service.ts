@@ -30,7 +30,10 @@ export class ProfilesService {
   }
 
   async findOne(id: number) {
-    const profile = await this.profileRepository.findOneBy({ id });
+    const profile = await this.profileRepository.findOne({
+      where: { id },
+      relations: ['user'],
+    });
 
     if (!profile) {
       throw new Error(`Profile with id ${id} not found`);

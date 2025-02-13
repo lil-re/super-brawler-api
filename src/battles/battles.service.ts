@@ -277,11 +277,11 @@ export class BattlesService {
     return query;
   }
 
-  async dashboard(filters: FilterBattleDto) {
-    const battlesPerDay = await this.getBattlesPerDay(filters);
-    const battlesPerMode = await this.getBattlesPerEvent();
-    const averageTrophyChangePerDay = await this.getAverageTrophyChangePerDay();
-    const averageTrophyChangePerMode = await this.getAverageTrophyChangePerMode();
+  async dashboard(profile, filters: FilterBattleDto) {
+    const battlesPerDay = await this.getBattlesPerDay(profile, filters);
+    const battlesPerMode = await this.getBattlesPerEvent(profile);
+    const averageTrophyChangePerDay = await this.getAverageTrophyChangePerDay(profile);
+    const averageTrophyChangePerMode = await this.getAverageTrophyChangePerMode(profile);
 
     return {
       battlesPerDay,
@@ -291,71 +291,75 @@ export class BattlesService {
     };
   }
 
-  async getBattlesPerDay(filters: FilterBattleDto) {
+  async getBattlesPerDay(profile, filters: FilterBattleDto) {
     const battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .select([
         'count(battle.id) as numberOfBattles',
-        'battle.battleTime',
-        'battle.result',
-      ]);
+        'battle.battleTime as battleTime',
+        'battle.result as result',
+      ])
+      .where('battle.profileId = :profileId', { profileId: profile.id });
 
     if (filters.dateRange === 'thisMonth') {
       battleQuery
-        .where('battle.battleTime >= CURDATE() - INTERVAL 1 MONTH')
+        .andWhere('battle.battleTime >= CURDATE() - INTERVAL 1 MONTH')
         .groupBy('DAY(battle.battleTime), battle.result');
     } else if (filters.dateRange === 'thisYear') {
       battleQuery
-        .where('battle.battleTime >= CURDATE() - INTERVAL 1 YEAR')
+        .andWhere('battle.battleTime >= CURDATE() - INTERVAL 1 YEAR')
         .groupBy('MONTH(battle.battleTime), battle.result');
     } else if (filters.dateRange === 'last10Years') {
       battleQuery
-        .where('battle.battleTime >= CURDATE() - INTERVAL 10 YEAR')
+        .andWhere('battle.battleTime >= CURDATE() - INTERVAL 10 YEAR')
         .groupBy('YEAR(battle.battleTime), battle.result');
     } else {
       battleQuery
-        .where('battle.battleTime >= CURDATE() - INTERVAL 1 WEEK')
+        .andWhere('battle.battleTime >= CURDATE() - INTERVAL 1 WEEK')
         .groupBy('DAY(battle.battleTime), battle.result');
     }
     return battleQuery.getRawMany();
   }
 
-  async getBattlesPerEvent() {
+  async getBattlesPerEvent(profile) {
     const battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('event', 'event', 'event.id = battle.eventId')
       .select([
         'count(battle.id) as numberOfBattles',
-        'event.mode',
-        'battle.result',
+        'event.mode as mode',
+        'battle.result as result',
       ])
+      .where('battle.profileId = :profileId', { profileId: profile.id })
       .groupBy('event.mode, battle.result');
 
     return battleQuery.getRawMany();
   }
 
-  async getAverageTrophyChangePerDay() {
+  async getAverageTrophyChangePerDay(profile) {
     const battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .select([
-        'battle.battleTime',
-        'avg(battle.trophyChange)',
-        'sum(battle.trophyChange)',
+        'battle.battleTime as battleTime',
+        'avg(battle.trophyChange) as averageTrophyChange',
+        'sum(battle.trophyChange) as totalTrophyChange',
       ])
+      .where('battle.profileId = :profileId', { profileId: profile.id })
       .groupBy('day(battle.battleTime)');
 
     return battleQuery.getRawMany();
   }
 
-  async getAverageTrophyChangePerMode() {
+  async getAverageTrophyChangePerMode(profile) {
     const battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('event', 'event', 'event.id = battle.eventId')
       .select([
-        'event.mode',
-        'avg(battle.trophyChange)',
-        'sum(battle.trophyChange)',
+        'event.mode as mode',
+        'avg(battle.trophyChange) as averageTrophyChange',
+        'sum(battle.trophyChange) as totalTrophyChange',
       ])
+      .where('battle.profileId = :profileId', { profileId: profile.id })
       .groupBy('event.mode');
 
     return battleQuery.getRawMany();

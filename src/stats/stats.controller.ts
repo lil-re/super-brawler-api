@@ -6,7 +6,7 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
+  UseGuards, Request,
 } from '@nestjs/common';
 import { StatsService } from './stats.service';
 import { CreateStatDto } from './dto/create-stat.dto';
@@ -38,8 +38,8 @@ export class StatsController {
 
   @UseGuards(AuthGuard)
   @Post('/dashboard')
-  dashboard(@Body() filterStatDto: FilterStatDto) {
-    return this.statsService.dashboard(filterStatDto);
+  dashboard(@Request() req, @Body() filterStatDto: FilterStatDto) {
+    return this.statsService.dashboard(req.profile, filterStatDto);
   }
 
   @UseGuards(AuthGuard)

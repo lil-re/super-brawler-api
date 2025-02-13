@@ -75,7 +75,7 @@ export class StatsService {
     await this.statRepository.remove(stat);
   }
 
-  async dashboard(filters: FilterStatDto) {
+  async dashboard(profile, filters: FilterStatDto) {
     return this.statRepository
       .createQueryBuilder('stat')
       .innerJoin(
@@ -114,6 +114,7 @@ export class StatsService {
         'stat.soloVictories',
         'stat.createdAt',
       ])
+      .where('stat.profileId = :profileId', { profileId: profile.id })
       .getMany();
   }
 }

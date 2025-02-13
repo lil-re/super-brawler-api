@@ -48,10 +48,8 @@ export class BattlesController {
   @UseGuards(AuthGuard)
   @Post('/dashboard')
   dashboard(@Request() req, @Body() battleStatDto: FilterBattleDto) {
-    console.log(req.user);
-    return this.battlesService.dashboard(battleStatDto);
+    return this.battlesService.dashboard(req.profile, battleStatDto);
   }
-
 
   @UseGuards(AuthGuard)
   @Patch(':id')
