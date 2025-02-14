@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from '@nestjs/config';
 import { CronModule } from './cron/cron.module';
+import { DashboardsModule } from './dashboards/dashboards.module';
 
 @Module({
   controllers: [AppController],
@@ -20,6 +21,7 @@ import { CronModule } from './cron/cron.module';
     ScheduleModule.forRoot(),
     ConfigModule.forRoot(),
     CronModule,
+    DashboardsModule,
   ],
 })
 export class AppModule {}

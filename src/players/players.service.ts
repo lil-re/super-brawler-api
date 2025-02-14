@@ -1,14 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { Repository } from 'typeorm';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
-import { Repository } from 'typeorm';
 import { Player } from './player.entity';
+import { Battle } from '../battles/battle.entity';
 
 @Injectable()
 export class PlayersService {
   constructor(
     @Inject('PLAYER_REPOSITORY')
-    private playerRepository: Repository<Player>,
+    private playerRepository: Repository<Player>
   ) {}
 
   async create(createPlayerDto: CreatePlayerDto) {

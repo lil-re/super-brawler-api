@@ -46,12 +46,6 @@ export class BattlesController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('/dashboard')
-  dashboard(@Request() req, @Body() battleStatDto: FilterBattleDto) {
-    return this.battlesService.dashboard(req.profile, battleStatDto);
-  }
-
-  @UseGuards(AuthGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateBattleDto: UpdateBattleDto) {
     return this.battlesService.update(+id, updateBattleDto);

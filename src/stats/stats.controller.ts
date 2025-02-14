@@ -37,12 +37,6 @@ export class StatsController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('/dashboard')
-  dashboard(@Request() req, @Body() filterStatDto: FilterStatDto) {
-    return this.statsService.dashboard(req.profile, filterStatDto);
-  }
-
-  @UseGuards(AuthGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateStatDto: UpdateStatDto) {
     return this.statsService.update(+id, updateStatDto);
