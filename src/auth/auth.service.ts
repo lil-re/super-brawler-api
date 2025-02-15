@@ -11,7 +11,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async logIn(email: string, pass: string): Promise<{ access_token: string }> {
+  async logIn(email: string, pass: string): Promise<{ accessToken: string }> {
     const user = await this.usersService.findOneByEmail(email);
     const isMatch = await bcrypt.compare(pass, user.password);
 
@@ -21,11 +21,11 @@ export class AuthService {
 
     const payload = { sub: user.id, email: user.email };
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      accessToken: await this.jwtService.signAsync(payload),
     };
   }
 
-  async signUp(signUpDto: SignUpDto): Promise<{ access_token: string }> {
+  async signUp(signUpDto: SignUpDto): Promise<{ accessToken: string }> {
     const user = await this.usersService.create(signUpDto);
 
     if (!user) {
@@ -34,7 +34,7 @@ export class AuthService {
 
     const payload = { sub: user.id, email: user.email };
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      accessToken: await this.jwtService.signAsync(payload),
     };
   }
 }

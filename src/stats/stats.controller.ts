@@ -11,38 +11,37 @@ import {
 import { StatsService } from './stats.service';
 import { CreateStatDto } from './dto/create-stat.dto';
 import { UpdateStatDto } from './dto/update-stat.dto';
-import { AuthGuard } from '../auth/auth.guard';
-import { FilterStatDto } from './dto/filter-stat.dto';
+import { ProfileGuard } from '../auth/profile.guard';
 
 @Controller('stats')
 export class StatsController {
   constructor(private readonly statsService: StatsService) {}
 
-  @UseGuards(AuthGuard)
+  @UseGuards(ProfileGuard)
   @Post()
   create(@Body() creatStatDto: CreateStatDto) {
     return this.statsService.create(creatStatDto);
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(ProfileGuard)
   @Get()
   findAll() {
     return this.statsService.findAll();
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(ProfileGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.statsService.findOne(+id);
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(ProfileGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateStatDto: UpdateStatDto) {
     return this.statsService.update(+id, updateStatDto);
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(ProfileGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.statsService.remove(+id);
