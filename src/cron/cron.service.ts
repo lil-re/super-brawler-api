@@ -27,7 +27,10 @@ export class CronService {
 
     for (const profile of profiles) {
       const data = await this.handleBattlesCronQuery(profile);
-      await this.handleBattlesCronData(profile, data.items);
+
+      if (data?.items) {
+        await this.handleBattlesCronData(profile, data.items);
+      }
     }
   }
 
@@ -75,7 +78,7 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_5AM)
+  @Cron(CronExpression.EVERY_DAY_AT_1AM)
   async statsCron() {
     const profiles = await this.profilesService.findAll();
 

@@ -6,7 +6,7 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
+  UseGuards, Request,
 } from '@nestjs/common';
 import { BattlesService } from './battles.service';
 import { CreateBattleDto } from './dto/create-battle.dto';
@@ -38,8 +38,8 @@ export class BattlesController {
 
   @UseGuards(ProfileGuard)
   @Post('/search')
-  search(@Body() searchBattleDto: SearchBattleDto) {
-    return this.battlesService.search(searchBattleDto);
+  search(@Request() req, @Body() searchBattleDto: SearchBattleDto) {
+    return this.battlesService.search(req.profile, searchBattleDto);
   }
 
   @UseGuards(ProfileGuard)

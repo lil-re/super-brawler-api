@@ -69,5 +69,6 @@ export class ProfilesService {
       throw new Error(`Profile with id ${id} not found`);
     }
     await this.profileRepository.remove(profile);
+    return true;
   }
 }

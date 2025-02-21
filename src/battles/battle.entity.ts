@@ -4,10 +4,10 @@ import {
   Column,
   ManyToOne,
   OneToMany,
+  Index
 } from 'typeorm';
 import { Player } from '../players/player.entity';
 import { Event } from '../events/event.entity';
-import { User } from '../users/user.entity';
 import { Profile } from '../profiles/profile.entity';
 
 @Entity()
@@ -19,6 +19,7 @@ export class Battle {
   starPlayerTag: string;
 
   @Column()
+  @Index()
   battleTime: Date;
 
   @Column({ nullable: true })

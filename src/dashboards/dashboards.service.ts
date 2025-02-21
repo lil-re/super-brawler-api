@@ -99,7 +99,11 @@ export class DashboardsService {
         .andWhere('battle.battleTime >= CURDATE() - INTERVAL 1 WEEK')
         .groupBy('DAY(battle.battleTime), battle.result');
     }
-    return battleQuery.getRawMany();
+    const results = await battleQuery.getRawMany();
+    return results.map((item) => ({
+      ...item,
+      numberOfBattles: Number(item.numberOfBattles)
+    }));
   }
 
   async getBattlesPerEvent(profile) {
@@ -114,7 +118,11 @@ export class DashboardsService {
       .where('battle.profileId = :profileId', { profileId: profile.id })
       .groupBy('event.mode, battle.result');
 
-    return battleQuery.getRawMany();
+    const results = await battleQuery.getRawMany();
+    return results.map((item) => ({
+      ...item,
+      numberOfBattles: Number(item.numberOfBattles)
+    }));
   }
 
   async getAverageTrophyChangePerDay(profile) {
@@ -128,7 +136,12 @@ export class DashboardsService {
       .where('battle.profileId = :profileId', { profileId: profile.id })
       .groupBy('day(battle.battleTime)');
 
-    return battleQuery.getRawMany();
+    const results = await battleQuery.getRawMany();
+    return results.map((item) => ({
+      ...item,
+      averageTrophyChange: Number(item.averageTrophyChange),
+      totalTrophyChange: Number(item.totalTrophyChange)
+    }));
   }
 
   async getAverageTrophyChangePerMode(profile) {
@@ -143,7 +156,12 @@ export class DashboardsService {
       .where('battle.profileId = :profileId', { profileId: profile.id })
       .groupBy('event.mode');
 
-    return battleQuery.getRawMany();
+    const results = await battleQuery.getRawMany();
+    return results.map((item) => ({
+      ...item,
+      averageTrophyChange: Number(item.averageTrophyChange),
+      totalTrophyChange: Number(item.totalTrophyChange)
+    }));
   }
 
   async players(profile) {
@@ -169,7 +187,11 @@ export class DashboardsService {
       .andWhere('player.tag = :profileTag', { profileTag: profile.tag })
       .groupBy('player.brawlerName, battle.result');
 
-    return battleQuery.getRawMany();
+    const results = await battleQuery.getRawMany();
+    return results.map((item) => ({
+      ...item,
+      numberOfBattles: Number(item.numberOfBattles)
+    }));
   }
 
   async getAverageTrophyChangePerPlayer(profile) {
@@ -185,6 +207,11 @@ export class DashboardsService {
       .andWhere('player.tag = :profileTag', { profileTag: profile.tag })
       .groupBy('player.brawlerName');
 
-    return battleQuery.getRawMany();
+    const results = await battleQuery.getRawMany();
+    return results.map((item) => ({
+      ...item,
+      averageTrophyChange: Number(item.averageTrophyChange),
+      totalTrophyChange: Number(item.totalTrophyChange)
+    }));
   }
 }

@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import dayjs, { Dayjs } from 'dayjs';
+import * as dayjs from 'dayjs'
 import { Battle } from './battle.entity';
 import { Event } from '../events/event.entity';
 import { Profile } from '../profiles/profile.entity';
@@ -10,7 +10,6 @@ import { ProfilesService } from '../profiles/profiles.service';
 import { UpdateBattleDto } from './dto/update-battle.dto';
 import { CreateBattleDto } from './dto/create-battle.dto';
 import { SearchBattleDto } from './dto/search-battle.dto';
-import { FilterBattleDto } from './dto/filter-battle.dto';
 
 @Injectable()
 export class BattlesService {
@@ -194,8 +193,8 @@ export class BattlesService {
     return new Date(formattedDate);
   }
 
-  async search(filters: SearchBattleDto) {
-    const { date, dateRange, eventId, playerTag, brawlerName } = filters;
+  async search(profile, filters: SearchBattleDto) {
+    const { page, pageSize, date, dateRange, eventId, brawlerName } = filters;
 
     // Base query
     let query = this.battleRepository
@@ -205,7 +204,8 @@ export class BattlesService {
       .addSelect('event.mode')
       .innerJoin('battle.players', 'player')
       .addSelect('player.brawlerName')
-      .andWhere('player.tag = :playerTag', { playerTag });
+      .andWhere('player.tag = :playerTag', { playerTag: profile.tag })
+      .andWhere('battle.profileId = :profileId', { profileId: profile.id });
 
     // Filter by exact date
     query = this.searchByDate(query, date, dateRange);
@@ -215,6 +215,9 @@ export class BattlesService {
 
     // Filter by brawler name
     query = this.searchByBrawler(query, brawlerName);
+
+    // Pagination
+    query = this.paginateSearch(query, page, pageSize);
 
     // Execute the query and return results
     return await query.getMany();
@@ -232,7 +235,7 @@ export class BattlesService {
     // Or filter by date range
     else if (dateRange) {
       const today = dayjs().startOf('day');
-      let startOfRange: Dayjs;
+      let startOfRange;
 
       switch (dateRange) {
         case 'thisWeek':
@@ -275,5 +278,28 @@ export class BattlesService {
       });
     }
     return query;
+  }
+
+  paginateSearch(
+    query: SelectQueryBuilder<Battle>,
+    page: number,
+    pageSize: number,
+  ): SelectQueryBuilder<Battle> {
+    return query
+      .innerJoin(
+        (subQuery) => {
+          return subQuery
+            .select('id')
+            .from(Battle, 'battle')
+            .skip((page - 1) * pageSize)
+            .take(pageSize)
+            .orderBy('battle.id', 'ASC')
+            .addOrderBy('battle.battleTime', 'ASC');
+        },
+        'battle2',
+        'battle.id = battle2.id',
+      )
+      .orderBy('battle.id', 'ASC')
+      .addOrderBy('battle.battleTime', 'ASC');
   }
 }
