@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import * as dayjs from 'dayjs'
+import * as dayjs from 'dayjs';
+import * as utc from 'dayjs/plugin/utc';
+import * as timezone from 'dayjs/plugin/timezone';
 import { Battle } from './battle.entity';
 import { Event } from '../events/event.entity';
 import { Profile } from '../profiles/profile.entity';
@@ -10,6 +12,9 @@ import { ProfilesService } from '../profiles/profiles.service';
 import { UpdateBattleDto } from './dto/update-battle.dto';
 import { CreateBattleDto } from './dto/create-battle.dto';
 import { SearchBattleDto } from './dto/search-battle.dto';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 @Injectable()
 export class BattlesService {
@@ -194,6 +199,41 @@ export class BattlesService {
   }
 
   async search(profile, filters: SearchBattleDto) {
+    const items = await this.getSearchResults(profile, filters);
+    const pages = await this.getSearchCount(profile, filters);
+
+    return {
+      items,
+      pages: Number(pages.pageCount),
+    }
+  }
+
+  async getSearchCount(profile, filters: SearchBattleDto) {
+    const { pageSize, date, dateRange, eventId, brawlerName } = filters;
+
+    let query = this.battleRepository
+      .createQueryBuilder('battle')
+      .innerJoin('battle.event', 'event')
+      .innerJoin('battle.players', 'player')
+      .select('CEIL(COUNT(battle.id) / :pageSize)', 'pageCount')
+      .setParameter('pageSize', pageSize)
+      .andWhere('player.tag = :playerTag', { playerTag: profile.tag })
+      .andWhere('battle.profileId = :profileId', { profileId: profile.id });
+
+    // Filter by exact date
+    query = this.searchByDate(query, date, dateRange);
+
+    // Filter by event
+    query = this.searchByEvent(query, eventId);
+
+    // Filter by brawler name
+    query = this.searchByBrawler(query, brawlerName);
+
+    // Execute the query and return results
+    return await query.getRawOne();
+  }
+
+  async getSearchResults(profile, filters: SearchBattleDto) {
     const { page, pageSize, date, dateRange, eventId, brawlerName } = filters;
 
     // Base query
@@ -217,7 +257,7 @@ export class BattlesService {
     query = this.searchByBrawler(query, brawlerName);
 
     // Pagination
-    query = this.paginateSearch(query, page, pageSize);
+    query = this.paginateSearch(query, profile, filters);
 
     // Execute the query and return results
     return await query.getMany();
@@ -234,25 +274,25 @@ export class BattlesService {
     }
     // Or filter by date range
     else if (dateRange) {
-      const today = dayjs().startOf('day');
+      const today = dayjs.utc().set('hour', 0).set('minute', 0).set('second', 0);
       let startOfRange;
 
       switch (dateRange) {
         case 'thisWeek':
-          startOfRange = today.clone().startOf('week');
+          startOfRange = today.clone().subtract(1, 'week');
           break;
         case 'thisMonth':
-          startOfRange = today.clone().startOf('month');
+          startOfRange = today.clone().subtract(1, 'month');
           break;
         case 'thisYear':
-          startOfRange = today.clone().startOf('year');
+          startOfRange = today.clone().subtract(1, 'year');
           break;
         default:
           startOfRange = today;
       }
 
       query = query.andWhere('battle.battleTime >= :startOfRange', {
-        startOfRange: startOfRange.toDate(),
+        startOfRange: startOfRange.format(),
       });
     }
     return query;
@@ -282,24 +322,36 @@ export class BattlesService {
 
   paginateSearch(
     query: SelectQueryBuilder<Battle>,
-    page: number,
-    pageSize: number,
+    profile,
+    filters: SearchBattleDto
   ): SelectQueryBuilder<Battle> {
+    const { page, pageSize, date, dateRange, eventId, brawlerName } = filters;
+
     return query
       .innerJoin(
-        (subQuery) => {
-          return subQuery
-            .select('id')
+        (subQuery: SelectQueryBuilder<Battle>) => {
+          subQuery
+            .select('battle.id as joinedId')
             .from(Battle, 'battle')
-            .skip((page - 1) * pageSize)
-            .take(pageSize)
-            .orderBy('battle.id', 'ASC')
-            .addOrderBy('battle.battleTime', 'ASC');
+            .innerJoin('battle.players', 'player')
+            .andWhere('player.tag = :playerTag', { playerTag: profile.tag })
+            .andWhere('battle.profileId = :profileId', { profileId: profile.id })
+            .orderBy('battle.battleTime', 'DESC');
+
+          // Filter by exact date
+          subQuery = this.searchByDate(subQuery, date, dateRange);
+
+          // Filter by event
+          subQuery = this.searchByEvent(subQuery, eventId);
+
+          // Filter by brawler name
+          subQuery = this.searchByBrawler(subQuery, brawlerName);
+
+          return subQuery.limit(pageSize).offset((page - 1) * pageSize);
         },
         'battle2',
-        'battle.id = battle2.id',
+        'battle.id = battle2.joinedId',
       )
-      .orderBy('battle.id', 'ASC')
-      .addOrderBy('battle.battleTime', 'ASC');
+      .orderBy('battle.battleTime', 'DESC');
   }
 }
