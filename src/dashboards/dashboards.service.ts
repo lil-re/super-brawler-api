@@ -46,7 +46,7 @@ export class DashboardsService {
         'latest_stats',
         'stat.createdAt = latest_stats.max_createdAt',
       )
-      .orderBy('stat.createdAt', 'DESC')
+      .orderBy('stat.createdAt', 'ASC')
       .select([
         'stat.trophies',
         'stat.trioVictories',
@@ -77,10 +77,12 @@ export class DashboardsService {
       .createQueryBuilder('battle')
       .select([
         'count(battle.id) as numberOfBattles',
-        'battle.battleTime as battleTime',
+        'CAST(battle.battleTime AS DATE) as battleTime',
         'battle.result as result',
       ])
-      .where('battle.profileId = :profileId', { profileId: profile.id });
+      .where('battle.profileId = :profileId', { profileId: profile.id })
+      .andWhere('battle.result is not null')
+      .orderBy('battle.battleTime', 'ASC');
 
     if (filters.dateRange === 'thisMonth') {
       battleQuery

@@ -78,7 +78,7 @@ export class CronService {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_1AM)
+  @Cron(CronExpression.EVERY_4_HOURS)
   async statsCron() {
     const profiles = await this.profilesService.findAll();
 
