@@ -11,7 +11,7 @@ import { PlayersService } from '../players/players.service';
 import { ProfilesService } from '../profiles/profiles.service';
 import { UpdateBattleDto } from './dto/update-battle.dto';
 import { CreateBattleDto } from './dto/create-battle.dto';
-import { SearchBattleDto } from './dto/search-battle.dto';
+import { SearchBattleDto, SearchBattleType } from './dto/search-battle.dto';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -209,7 +209,7 @@ export class BattlesService {
   }
 
   async getSearchCount(profile, filters: SearchBattleDto) {
-    const { pageSize, date, dateRange, eventId, brawlerName } = filters;
+    const { pageSize, date, battleType, dateRange, eventId, brawlerName } = filters;
 
     let query = this.battleRepository
       .createQueryBuilder('battle')
@@ -219,6 +219,9 @@ export class BattlesService {
       .setParameter('pageSize', pageSize)
       .andWhere('player.tag = :playerTag', { playerTag: profile.tag })
       .andWhere('battle.profileId = :profileId', { profileId: profile.id });
+
+    // Filter by battle type (team vs team or showdown)
+    query = this.searchByBattleType(query, battleType);
 
     // Filter by exact date
     query = this.searchByDate(query, date, dateRange);
@@ -234,7 +237,7 @@ export class BattlesService {
   }
 
   async getSearchResults(profile, filters: SearchBattleDto) {
-    const { page, pageSize, date, dateRange, eventId, brawlerName } = filters;
+    const { battleType, date, dateRange, eventId, brawlerName } = filters;
 
     // Base query
     let query = this.battleRepository
@@ -246,6 +249,9 @@ export class BattlesService {
       .addSelect('player.brawlerName')
       .andWhere('player.tag = :playerTag', { playerTag: profile.tag })
       .andWhere('battle.profileId = :profileId', { profileId: profile.id });
+
+    // Filter by battle type (team vs team or showdown)
+    query = this.searchByBattleType(query, battleType);
 
     // Filter by exact date
     query = this.searchByDate(query, date, dateRange);
@@ -261,6 +267,18 @@ export class BattlesService {
 
     // Execute the query and return results
     return await query.getMany();
+  }
+
+  searchByBattleType(
+    query: SelectQueryBuilder<Battle>,
+    battleType: SearchBattleType,
+  ): SelectQueryBuilder<Battle> {
+    if (battleType === 'showdown') {
+      query.andWhere('battle.rank is not null');
+    } else {
+      query.andWhere('battle.rank is null');
+    }
+    return query
   }
 
   searchByDate(
@@ -325,7 +343,7 @@ export class BattlesService {
     profile,
     filters: SearchBattleDto
   ): SelectQueryBuilder<Battle> {
-    const { page, pageSize, date, dateRange, eventId, brawlerName } = filters;
+    const { page, pageSize, battleType, date, dateRange, eventId, brawlerName } = filters;
 
     return query
       .innerJoin(
@@ -337,6 +355,9 @@ export class BattlesService {
             .andWhere('player.tag = :playerTag', { playerTag: profile.tag })
             .andWhere('battle.profileId = :profileId', { profileId: profile.id })
             .orderBy('battle.battleTime', 'DESC');
+
+          // Filter by battle type (team vs team or showdown)
+          subQuery = this.searchByBattleType(subQuery, battleType);
 
           // Filter by exact date
           subQuery = this.searchByDate(subQuery, date, dateRange);
