@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { Battle } from '../battles/battle.entity';
 import { Stat } from '../stats/stat.entity';
 import { FilterBattleDto } from '../battles/dto/filter-battle.dto';
@@ -15,6 +15,12 @@ export class DashboardsService {
     private battleRepository: Repository<Battle>,
   ) {}
 
+  /**
+   * Profile stats
+   *
+   * @param profile
+   * @param filters
+   */
   async stats(profile, filters: FilterStatDto) {
     return this.statRepository
       .createQueryBuilder('stat')
@@ -58,11 +64,17 @@ export class DashboardsService {
       .getMany();
   }
 
+  /**
+   * Battle stats
+   *
+   * @param profile
+   * @param filters
+   */
   async battles(profile, filters: FilterBattleDto) {
     const battlesPerDay = await this.getBattlesPerDay(profile, filters);
-    const battlesPerMode = await this.getBattlesPerEvent(profile);
-    const averageTrophyChangePerDay = await this.getAverageTrophyChangePerDay(profile);
-    const averageTrophyChangePerMode = await this.getAverageTrophyChangePerMode(profile);
+    const battlesPerMode = await this.getBattlesPerEvent(profile, filters);
+    const averageTrophyChangePerDay = await this.getAverageTrophyChangePerDay(profile, filters);
+    const averageTrophyChangePerMode = await this.getAverageTrophyChangePerMode(profile, filters);
 
     return {
       battlesPerDay,
@@ -73,7 +85,7 @@ export class DashboardsService {
   }
 
   async getBattlesPerDay(profile, filters: FilterBattleDto) {
-    const battleQuery = this.battleRepository
+    let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .select([
         'count(battle.id) as numberOfBattles',
@@ -84,32 +96,19 @@ export class DashboardsService {
       .andWhere('battle.result is not null')
       .orderBy('battle.battleTime', 'ASC');
 
-    if (filters.dateRange === 'thisMonth') {
-      battleQuery
-        .andWhere('battle.battleTime >= CURDATE() - INTERVAL 1 MONTH')
-        .groupBy('DAY(battle.battleTime), battle.result');
-    } else if (filters.dateRange === 'thisYear') {
-      battleQuery
-        .andWhere('battle.battleTime >= CURDATE() - INTERVAL 1 YEAR')
-        .groupBy('MONTH(battle.battleTime), battle.result');
-    } else if (filters.dateRange === 'last10Years') {
-      battleQuery
-        .andWhere('battle.battleTime >= CURDATE() - INTERVAL 10 YEAR')
-        .groupBy('YEAR(battle.battleTime), battle.result');
-    } else {
-      battleQuery
-        .andWhere('battle.battleTime >= CURDATE() - INTERVAL 1 WEEK')
-        .groupBy('DAY(battle.battleTime), battle.result');
-    }
+    battleQuery = this.filterBattleByDateRange(battleQuery, filters);
+    battleQuery = this.groupByBattleByDateRange(battleQuery, filters);
+
     const results = await battleQuery.getRawMany();
+
     return results.map((item) => ({
       ...item,
       numberOfBattles: Number(item.numberOfBattles)
     }));
   }
 
-  async getBattlesPerEvent(profile) {
-    const battleQuery = this.battleRepository
+  async getBattlesPerEvent(profile, filters: FilterBattleDto) {
+    let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('event', 'event', 'event.id = battle.eventId')
       .select([
@@ -118,27 +117,35 @@ export class DashboardsService {
         'battle.result as result',
       ])
       .where('battle.profileId = :profileId', { profileId: profile.id })
+      .orderBy('event.mode', 'ASC')
       .groupBy('event.mode, battle.result');
 
+    battleQuery = this.filterBattleByDateRange(battleQuery, filters);
+
     const results = await battleQuery.getRawMany();
+
     return results.map((item) => ({
       ...item,
       numberOfBattles: Number(item.numberOfBattles)
     }));
   }
 
-  async getAverageTrophyChangePerDay(profile) {
-    const battleQuery = this.battleRepository
+  async getAverageTrophyChangePerDay(profile, filters: FilterBattleDto) {
+    let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .select([
-        'battle.battleTime as battleTime',
+        'CAST(battle.battleTime AS DATE) as battleTime',
         'avg(battle.trophyChange) as averageTrophyChange',
         'sum(battle.trophyChange) as totalTrophyChange',
       ])
       .where('battle.profileId = :profileId', { profileId: profile.id })
       .groupBy('day(battle.battleTime)');
 
+    battleQuery = this.filterBattleByDateRange(battleQuery, filters);
+    battleQuery = this.groupByBattleByDateRange(battleQuery, filters);
+
     const results = await battleQuery.getRawMany();
+
     return results.map((item) => ({
       ...item,
       averageTrophyChange: Number(item.averageTrophyChange),
@@ -146,8 +153,8 @@ export class DashboardsService {
     }));
   }
 
-  async getAverageTrophyChangePerMode(profile) {
-    const battleQuery = this.battleRepository
+  async getAverageTrophyChangePerMode(profile, filters: FilterBattleDto) {
+    let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('event', 'event', 'event.id = battle.eventId')
       .select([
@@ -156,9 +163,13 @@ export class DashboardsService {
         'sum(battle.trophyChange) as totalTrophyChange',
       ])
       .where('battle.profileId = :profileId', { profileId: profile.id })
+      .orderBy('event.mode', 'ASC')
       .groupBy('event.mode');
 
+    battleQuery = this.filterBattleByDateRange(battleQuery, filters);
+
     const results = await battleQuery.getRawMany();
+
     return results.map((item) => ({
       ...item,
       averageTrophyChange: Number(item.averageTrophyChange),
@@ -166,6 +177,43 @@ export class DashboardsService {
     }));
   }
 
+  filterBattleByDateRange(
+    battleQuery: SelectQueryBuilder<Battle>,
+    filters: FilterBattleDto,
+  ): SelectQueryBuilder<Battle> {
+    if (filters.dateRange === 'thisMonth') {
+      battleQuery.andWhere('battle.battleTime >= CURDATE() - INTERVAL 1 MONTH');
+    } else if (filters.dateRange === 'thisYear') {
+      battleQuery.andWhere('battle.battleTime >= CURDATE() - INTERVAL 1 YEAR');
+    } else if (filters.dateRange === 'last10Years') {
+      battleQuery.andWhere('battle.battleTime >= CURDATE() - INTERVAL 10 YEAR');
+    } else {
+      battleQuery.andWhere('battle.battleTime >= CURDATE() - INTERVAL 1 WEEK');
+    }
+    return battleQuery;
+  }
+
+  groupByBattleByDateRange(
+    battleQuery: SelectQueryBuilder<Battle>,
+    filters: FilterBattleDto,
+  ): SelectQueryBuilder<Battle> {
+    if (filters.dateRange === 'thisMonth') {
+      battleQuery.groupBy('DAY(battle.battleTime), battle.result');
+    } else if (filters.dateRange === 'thisYear') {
+      battleQuery.groupBy('MONTH(battle.battleTime), battle.result');
+    } else if (filters.dateRange === 'last10Years') {
+      battleQuery.groupBy('YEAR(battle.battleTime), battle.result');
+    } else {
+      battleQuery.groupBy('DAY(battle.battleTime), battle.result');
+    }
+    return battleQuery;
+  }
+
+  /**
+   * Brawler stats
+   *
+   * @param profile
+   */
   async players(profile) {
     const battlesPerPlayer = await this.getBattlesPerPlayer(profile);
     const averageTrophyChangePerPlayer = await this.getAverageTrophyChangePerPlayer(profile);
