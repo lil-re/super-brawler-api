@@ -37,12 +37,6 @@ export class BattlesController {
   }
 
   @UseGuards(ProfileGuard)
-  @Post('/search')
-  search(@Request() req, @Body() searchBattleDto: SearchBattleDto) {
-    return this.battlesService.search(req.profile, searchBattleDto);
-  }
-
-  @UseGuards(ProfileGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateBattleDto: UpdateBattleDto) {
     return this.battlesService.update(+id, updateBattleDto);

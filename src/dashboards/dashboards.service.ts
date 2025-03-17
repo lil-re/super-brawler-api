@@ -4,6 +4,8 @@ import { Battle } from '../battles/battle.entity';
 import { Stat } from '../stats/stat.entity';
 import { FilterBattleDto } from '../battles/dto/filter-battle.dto';
 import { FilterStatDto } from '../stats/dto/filter-stat.dto';
+import { SearchBattleDto, SearchBattleType } from '../battles/dto/search-battle.dto';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class DashboardsService {
@@ -21,7 +23,7 @@ export class DashboardsService {
    * @param profile
    * @param filters
    */
-  async stats(profile, filters: FilterStatDto) {
+  async profileStats(profile, filters: FilterStatDto) {
     return this.statRepository
       .createQueryBuilder('stat')
       .innerJoin(
@@ -65,12 +67,196 @@ export class DashboardsService {
   }
 
   /**
+   * Battles history
+   *
+   * @param profile
+   * @param filters
+   */
+  async battleHistory(profile, filters: SearchBattleDto) {
+    const items = await this.getSearchResults(profile, filters);
+    const pages = await this.getSearchCount(profile, filters);
+
+    return {
+      items,
+      pages: Number(pages.pageCount),
+    }
+  }
+
+  async getSearchCount(profile, filters: SearchBattleDto) {
+    const { pageSize, date, battleType, dateRange, eventId, brawlerName } = filters;
+
+    let query = this.battleRepository
+      .createQueryBuilder('battle')
+      .innerJoin('battle.event', 'event')
+      .innerJoin('battle.players', 'player')
+      .select('CEIL(COUNT(battle.id) / :pageSize)', 'pageCount')
+      .setParameter('pageSize', pageSize)
+      .andWhere('player.tag = :playerTag', { playerTag: profile.tag })
+      .andWhere('battle.profileId = :profileId', { profileId: profile.id });
+
+    // Filter by battle type (team vs team or showdown)
+    query = this.searchByBattleType(query, battleType);
+
+    // Filter by exact date
+    query = this.searchByDate(query, date, dateRange);
+
+    // Filter by event
+    query = this.searchByEvent(query, eventId);
+
+    // Filter by brawler name
+    query = this.searchByBrawler(query, brawlerName);
+
+    // Execute the query and return results
+    return await query.getRawOne();
+  }
+
+  async getSearchResults(profile, filters: SearchBattleDto) {
+    const { battleType, date, dateRange, eventId, brawlerName } = filters;
+
+    // Base query
+    let query = this.battleRepository
+      .createQueryBuilder('battle')
+      .innerJoin('battle.event', 'event')
+      .addSelect('event.map')
+      .addSelect('event.mode')
+      .innerJoin('battle.players', 'player')
+      .addSelect('player.brawlerName')
+      .andWhere('player.tag = :playerTag', { playerTag: profile.tag })
+      .andWhere('battle.profileId = :profileId', { profileId: profile.id });
+
+    // Filter by battle type (team vs team or showdown)
+    query = this.searchByBattleType(query, battleType);
+
+    // Filter by exact date
+    query = this.searchByDate(query, date, dateRange);
+
+    // Filter by event
+    query = this.searchByEvent(query, eventId);
+
+    // Filter by brawler name
+    query = this.searchByBrawler(query, brawlerName);
+
+    // Pagination
+    query = this.paginateSearch(query, profile, filters);
+
+    // Execute the query and return results
+    return await query.getMany();
+  }
+
+  searchByBattleType(
+    query: SelectQueryBuilder<Battle>,
+    battleType: SearchBattleType,
+  ): SelectQueryBuilder<Battle> {
+    if (battleType === 'showdown') {
+      query.andWhere('battle.rank is not null');
+    } else {
+      query.andWhere('battle.rank is null');
+    }
+    return query
+  }
+
+  searchByDate(
+    query: SelectQueryBuilder<Battle>,
+    date: string,
+    dateRange: string,
+  ): SelectQueryBuilder<Battle> {
+    // Filter by exact date
+    if (date) {
+      query.andWhere('DATE(battle.battleTime) = :date', { date });
+    }
+    // Or filter by date range
+    else if (dateRange) {
+      const today = dayjs.utc().set('hour', 0).set('minute', 0).set('second', 0);
+      let startOfRange;
+
+      switch (dateRange) {
+        case 'thisWeek':
+          startOfRange = today.clone().subtract(1, 'week');
+          break;
+        case 'thisMonth':
+          startOfRange = today.clone().subtract(1, 'month');
+          break;
+        case 'thisYear':
+          startOfRange = today.clone().subtract(1, 'year');
+          break;
+        default:
+          startOfRange = today;
+      }
+
+      query = query.andWhere('battle.battleTime >= :startOfRange', {
+        startOfRange: startOfRange.format(),
+      });
+    }
+    return query;
+  }
+
+  searchByEvent(
+    query: SelectQueryBuilder<Battle>,
+    eventId: number,
+  ): SelectQueryBuilder<Battle> {
+    if (eventId) {
+      query = query.andWhere('event.id = :eventId', { eventId });
+    }
+    return query;
+  }
+
+  searchByBrawler(
+    query: SelectQueryBuilder<Battle>,
+    brawlerName: string,
+  ): SelectQueryBuilder<Battle> {
+    if (brawlerName) {
+      query = query.andWhere('player.brawlerName = :brawlerName', {
+        brawlerName,
+      });
+    }
+    return query;
+  }
+
+  paginateSearch(
+    query: SelectQueryBuilder<Battle>,
+    profile,
+    filters: SearchBattleDto
+  ): SelectQueryBuilder<Battle> {
+    const { page, pageSize, battleType, date, dateRange, eventId, brawlerName } = filters;
+
+    return query
+      .innerJoin(
+        (subQuery: SelectQueryBuilder<Battle>) => {
+          subQuery
+            .select('battle.id as joinedId')
+            .from(Battle, 'battle')
+            .innerJoin('battle.players', 'player')
+            .andWhere('player.tag = :playerTag', { playerTag: profile.tag })
+            .andWhere('battle.profileId = :profileId', { profileId: profile.id })
+            .orderBy('battle.battleTime', 'DESC');
+
+          // Filter by battle type (team vs team or showdown)
+          subQuery = this.searchByBattleType(subQuery, battleType);
+
+          // Filter by exact date
+          subQuery = this.searchByDate(subQuery, date, dateRange);
+
+          // Filter by event
+          subQuery = this.searchByEvent(subQuery, eventId);
+
+          // Filter by brawler name
+          subQuery = this.searchByBrawler(subQuery, brawlerName);
+
+          return subQuery.limit(pageSize).offset((page - 1) * pageSize);
+        },
+        'battle2',
+        'battle.id = battle2.joinedId',
+      )
+      .orderBy('battle.battleTime', 'DESC');
+  }
+
+  /**
    * Battle stats
    *
    * @param profile
    * @param filters
    */
-  async battles(profile, filters: FilterBattleDto) {
+  async battlesStats(profile, filters: FilterBattleDto) {
     const battlesPerDay = await this.getBattlesPerDay(profile, filters);
     const battlesPerMode = await this.getBattlesPerEvent(profile, filters);
     const averageTrophyChangePerDay = await this.getAverageTrophyChangePerDay(profile, filters);
@@ -214,17 +400,17 @@ export class DashboardsService {
    *
    * @param profile
    */
-  async players(profile) {
-    const battlesPerPlayer = await this.getBattlesPerPlayer(profile);
-    const averageTrophyChangePerPlayer = await this.getAverageTrophyChangePerPlayer(profile);
+  async brawlersStats(profile) {
+    const battlesPerBrawler = await this.getBattlesPerBrawler(profile);
+    const averageTrophyChangePerBrawler = await this.getAverageTrophyChangePerBrawler(profile);
 
     return {
-      battlesPerPlayer,
-      averageTrophyChangePerPlayer
+      battlesPerBrawler,
+      averageTrophyChangePerBrawler
     };
   }
 
-  async getBattlesPerPlayer(profile) {
+  async getBattlesPerBrawler(profile) {
     const battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('player', 'player', 'player.battleId = battle.id')
@@ -244,7 +430,7 @@ export class DashboardsService {
     }));
   }
 
-  async getAverageTrophyChangePerPlayer(profile) {
+  async getAverageTrophyChangePerBrawler(profile) {
     const battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('player', 'player', 'player.battleId = battle.id')

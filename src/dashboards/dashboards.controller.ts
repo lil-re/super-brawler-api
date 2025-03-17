@@ -3,6 +3,7 @@ import { ProfileGuard } from '../auth/profile.guard';
 import { FilterStatDto } from '../stats/dto/filter-stat.dto';
 import { FilterBattleDto } from '../battles/dto/filter-battle.dto';
 import { DashboardsService } from './dashboards.service';
+import { SearchBattleDto } from '../battles/dto/search-battle.dto';
 
 @Controller('dashboards')
 export class DashboardsController {
@@ -11,20 +12,26 @@ export class DashboardsController {
   ) {}
 
   @UseGuards(ProfileGuard)
-  @Post('/stats')
+  @Post('/profile-stats')
   stats(@Request() req, @Body() filterStatDto: FilterStatDto) {
-    return this.dashboardsService.stats(req.profile, filterStatDto);
+    return this.dashboardsService.profileStats(req.profile, filterStatDto);
   }
 
   @UseGuards(ProfileGuard)
-  @Post('/battles')
+  @Post('/battles-history')
+  search(@Request() req, @Body() searchBattleDto: SearchBattleDto) {
+    return this.dashboardsService.battleHistory(req.profile, searchBattleDto);
+  }
+
+  @UseGuards(ProfileGuard)
+  @Post('/battles-stats')
   battles(@Request() req, @Body() battleStatDto: FilterBattleDto) {
-    return this.dashboardsService.battles(req.profile, battleStatDto);
+    return this.dashboardsService.battlesStats(req.profile, battleStatDto);
   }
 
   @UseGuards(ProfileGuard)
-  @Post('/players')
+  @Post('/brawlers-stats')
   players(@Request() req) {
-    return this.dashboardsService.players(req.profile);
+    return this.dashboardsService.brawlersStats(req.profile);
   }
 }
