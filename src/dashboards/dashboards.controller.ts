@@ -25,13 +25,13 @@ export class DashboardsController {
 
   @UseGuards(ProfileGuard)
   @Post('/battles-stats')
-  battles(@Request() req, @Body() battleStatDto: FilterBattleDto) {
-    return this.dashboardsService.battlesStats(req.profile, battleStatDto);
+  battles(@Request() req, @Body() filterBattleDto: FilterBattleDto) {
+    return this.dashboardsService.battlesStats(req.profile, filterBattleDto);
   }
 
   @UseGuards(ProfileGuard)
   @Post('/brawlers-stats')
-  players(@Request() req) {
-    return this.dashboardsService.brawlersStats(req.profile);
+  players(@Request() req, @Body() filterBattleDto: FilterBattleDto) {
+    return this.dashboardsService.brawlersStats(req.profile, filterBattleDto);
   }
 }

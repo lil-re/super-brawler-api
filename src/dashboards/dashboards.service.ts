@@ -400,9 +400,9 @@ export class DashboardsService {
    *
    * @param profile
    */
-  async brawlersStats(profile) {
-    const battlesPerBrawler = await this.getBattlesPerBrawler(profile);
-    const averageTrophyChangePerBrawler = await this.getAverageTrophyChangePerBrawler(profile);
+  async brawlersStats(profile, filters: FilterBattleDto) {
+    const battlesPerBrawler = await this.getBattlesPerBrawler(profile, filters);
+    const averageTrophyChangePerBrawler = await this.getAverageTrophyChangePerBrawler(profile, filters);
 
     return {
       battlesPerBrawler,
@@ -410,8 +410,8 @@ export class DashboardsService {
     };
   }
 
-  async getBattlesPerBrawler(profile) {
-    const battleQuery = this.battleRepository
+  async getBattlesPerBrawler(profile, filters: FilterBattleDto) {
+    let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('player', 'player', 'player.battleId = battle.id')
       .select([
@@ -423,6 +423,8 @@ export class DashboardsService {
       .andWhere('player.tag = :profileTag', { profileTag: profile.tag })
       .groupBy('player.brawlerName, battle.result');
 
+    battleQuery = this.filterBattleByDateRange(battleQuery, filters);
+
     const results = await battleQuery.getRawMany();
     return results.map((item) => ({
       ...item,
@@ -430,8 +432,8 @@ export class DashboardsService {
     }));
   }
 
-  async getAverageTrophyChangePerBrawler(profile) {
-    const battleQuery = this.battleRepository
+  async getAverageTrophyChangePerBrawler(profile, filters: FilterBattleDto) {
+    let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('player', 'player', 'player.battleId = battle.id')
       .select([
@@ -442,6 +444,8 @@ export class DashboardsService {
       .where('battle.profileId = :profileId', { profileId: profile.id })
       .andWhere('player.tag = :profileTag', { profileTag: profile.tag })
       .groupBy('player.brawlerName');
+
+    battleQuery = this.filterBattleByDateRange(battleQuery, filters);
 
     const results = await battleQuery.getRawMany();
     return results.map((item) => ({
