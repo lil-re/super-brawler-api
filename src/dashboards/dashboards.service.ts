@@ -4,7 +4,7 @@ import { Battle } from '../battles/battle.entity';
 import { Stat } from '../stats/stat.entity';
 import { FilterBattleDto } from '../battles/dto/filter-battle.dto';
 import { FilterStatDto } from '../stats/dto/filter-stat.dto';
-import { SearchBattleDto, SearchBattleMode, SearchMapType } from '../battles/dto/search-battle.dto';
+import { SearchBattleDto, SearchBattleMode, SearchBattleType, SearchMapType } from '../battles/dto/search-battle.dto';
 import * as dayjs from 'dayjs';
 
 @Injectable()
@@ -83,7 +83,7 @@ export class DashboardsService {
   }
 
   async getSearchCount(profile, filters: SearchBattleDto) {
-    const { pageSize, date, battleMode, dateRange, eventId, brawlerName } = filters;
+    const { pageSize, date, battleType, battleMode, dateRange, eventId, brawlerName } = filters;
 
     let query = this.battleRepository
       .createQueryBuilder('battle')
@@ -95,7 +95,7 @@ export class DashboardsService {
       .andWhere('battle.profileId = :profileId', { profileId: profile.id });
 
     // Filter by battle type (team vs team or showdown)
-    query = this.searchByBattleMode(query, battleMode);
+    query = this.searchByBattleType(query, battleType, battleMode);
 
     // Filter by exact date
     query = this.searchByDate(query, date, dateRange);
@@ -111,7 +111,7 @@ export class DashboardsService {
   }
 
   async getSearchResults(profile, filters: SearchBattleDto) {
-    const { battleMode, mapType, date, dateRange, eventId, brawlerName } = filters;
+    const { battleType, battleMode, mapType, date, dateRange, eventId, brawlerName } = filters;
 
     // Base query
     let query = this.battleRepository
@@ -125,7 +125,7 @@ export class DashboardsService {
       .andWhere('battle.profileId = :profileId', { profileId: profile.id });
 
     // Filter by battle mode (team vs team or showdown)
-    query = this.searchByBattleMode(query, battleMode);
+    query = this.searchByBattleType(query, battleType, battleMode);
 
     // Filter by map type (community maps or official map)
     query = this.searchByMapType(query, mapType);
@@ -146,16 +146,23 @@ export class DashboardsService {
     return await query.getMany();
   }
 
-  searchByBattleMode(
+  searchByBattleType(
     query: SelectQueryBuilder<Battle>,
+    battleType: SearchBattleType,
     battleMode: SearchBattleMode,
   ): SelectQueryBuilder<Battle> {
-    if (battleMode === 'showdown') {
+    // Filter by battle type : team vs team or showdown
+    if (battleType === 'showdown') {
       query.andWhere('battle.rank is not null');
     } else {
       query.andWhere('battle.rank is null');
     }
-    return query
+
+    // Filter by battle mode : gem grab, heist, solo/duo showdown...
+    if (battleMode !== 'all') {
+      query.andWhere('event.mode = :mode', { mode: battleMode });
+    }
+    return query;
   }
 
   searchByMapType(
@@ -232,7 +239,7 @@ export class DashboardsService {
     profile,
     filters: SearchBattleDto
   ): SelectQueryBuilder<Battle> {
-    const { page, pageSize, battleMode, mapType, date, dateRange, eventId, brawlerName } = filters;
+    const { page, pageSize, battleType, battleMode, mapType, date, dateRange, eventId, brawlerName } = filters;
 
     return query
       .innerJoin(
@@ -240,13 +247,16 @@ export class DashboardsService {
           subQuery
             .select('battle.id as joinedId')
             .from(Battle, 'battle')
+            .innerJoin('battle.event', 'event')
+            .addSelect('event.map')
+            .addSelect('event.mode')
             .innerJoin('battle.players', 'player')
             .andWhere('player.tag = :playerTag', { playerTag: profile.tag })
             .andWhere('battle.profileId = :profileId', { profileId: profile.id })
             .orderBy('battle.battleTime', 'DESC');
 
           // Filter by battle type (team vs team or showdown)
-          subQuery = this.searchByBattleMode(subQuery, battleMode);
+          subQuery = this.searchByBattleType(subQuery, battleType, battleMode);
 
           // Filter by map type (community maps or original map)
           query = this.searchByMapType(query, mapType);
