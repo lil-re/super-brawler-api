@@ -5,12 +5,16 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { ProfilesService } from '../profiles/profiles.service';
+import { Battle } from '../battles/battle.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @Inject('USER_REPOSITORY')
     private userRepository: Repository<User>,
+
+    @Inject('BATTLE_REPOSITORY')
+    private battleRepository: Repository<Battle>,
 
     private profilesService: ProfilesService,
   ) {}
@@ -57,6 +61,42 @@ export class UsersService {
       throw new Error(`User with email ${email} not found`);
     }
     return user;
+  }
+
+  async findAllEventModesByProfile(profileId: number) {
+    const data = await this.battleRepository
+      .createQueryBuilder('battle')
+      .select(["event.mode"])
+      .innerJoin("battle.event", "event")
+      .where("battle.profileId = :profileId", { profileId })
+      .groupBy("event.mode")
+      .distinct(true)
+      .getRawMany();
+    return data.map((item) => item.event_mode);
+  }
+
+  async findAllEventMapsByProfile(profileId: number) {
+    const data = await this.battleRepository
+      .createQueryBuilder('battle')
+      .select(["event.map"])
+      .innerJoin("battle.event", "event")
+      .where("battle.profileId = :profileId", { profileId })
+      .groupBy("event.map")
+      .distinct(true)
+      .getRawMany();
+    return data.map((item) => item.event_map);
+  }
+
+  async findAllBrawlersByProfile(profileId: number) {
+    const data = await this.battleRepository
+      .createQueryBuilder('battle')
+      .select(["player.brawlerName"])
+      .innerJoin('battle.players', 'player')
+      .where("battle.profileId = :profileId", { profileId })
+      .groupBy("player.brawlerName")
+      .distinct(true)
+      .getRawMany();
+    return data.map((item) => item.player_brawlerName);
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {

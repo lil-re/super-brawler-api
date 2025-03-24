@@ -11,7 +11,6 @@ import { PlayersService } from '../players/players.service';
 import { ProfilesService } from '../profiles/profiles.service';
 import { UpdateBattleDto } from './dto/update-battle.dto';
 import { CreateBattleDto } from './dto/create-battle.dto';
-import { SearchBattleDto, SearchBattleType } from './dto/search-battle.dto';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
