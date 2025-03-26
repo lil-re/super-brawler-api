@@ -178,7 +178,7 @@ export class DashboardsService {
     query: SelectQueryBuilder<Battle>,
     brawlerName: string,
   ): SelectQueryBuilder<Battle> {
-    if (brawlerName) {
+    if (brawlerName && brawlerName !== 'all') {
       query = query.andWhere('player.brawlerName = :brawlerName', {
         brawlerName,
       });

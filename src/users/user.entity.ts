@@ -19,6 +19,12 @@ export class User {
   @Column({ default: 'en' })
   language: string;
 
+  @Column({ default: 'dmy' })
+  dateFormat: string;
+
+  @Column({ default: 'lightTheme' })
+  theme: string;
+
   @OneToMany(() => Profile, (profile) => profile.user)
   profiles: Profile[];
 }

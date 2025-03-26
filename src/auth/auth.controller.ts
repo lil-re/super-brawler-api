@@ -14,7 +14,6 @@ import { SignUpDto } from './dto/sign-up.dto';
 import { LogInDto } from './dto/log-in.dto';
 import { UsersService } from '../users/users.service';
 import { ProfileGuard } from './profile.guard';
-import { SearchBattleDto } from '../battles/dto/search-battle.dto';
 
 @Controller('auth')
 export class AuthController {
