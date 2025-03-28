@@ -1,10 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { Repository } from 'typeorm';
 import { CreateStatDto } from './dto/create-stat.dto';
 import { UpdateStatDto } from './dto/update-stat.dto';
-import { Repository } from 'typeorm';
 import { Stat } from './stat.entity';
 import { ProfilesService } from '../profiles/profiles.service';
-import { FilterStatDto } from './dto/filter-stat.dto';
 
 @Injectable()
 export class StatsService {

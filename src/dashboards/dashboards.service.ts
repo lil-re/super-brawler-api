@@ -287,12 +287,10 @@ export class DashboardsService {
       .createQueryBuilder('battle')
       .select([
         'count(battle.id) as numberOfBattles',
-        'CAST(battle.battleTime AS DATE) as battleTime',
-        'battle.result as result',
+        'battle.result as battleResult',
       ])
       .where('battle.profileId = :profileId', { profileId: profile.id })
-      .andWhere('battle.result is not null')
-      .orderBy('battle.battleTime', 'ASC');
+      .andWhere('battle.result is not null');
 
     battleQuery = this.filterBattleByDateRange(battleQuery, filters);
     battleQuery = this.groupByBattleByDateRange(battleQuery, filters);
@@ -332,12 +330,10 @@ export class DashboardsService {
     let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .select([
-        'CAST(battle.battleTime AS DATE) as battleTime',
         'avg(battle.trophyChange) as averageTrophyChange',
         'sum(battle.trophyChange) as totalTrophyChange',
       ])
-      .where('battle.profileId = :profileId', { profileId: profile.id })
-      .groupBy('day(battle.battleTime)');
+      .where('battle.profileId = :profileId', { profileId: profile.id });
 
     battleQuery = this.filterBattleByDateRange(battleQuery, filters);
     battleQuery = this.groupByBattleByDateRange(battleQuery, filters);
@@ -396,14 +392,25 @@ export class DashboardsService {
     filters: FilterBattleDto,
   ): SelectQueryBuilder<Battle> {
     if (filters.dateRange === 'thisMonth') {
-      battleQuery.groupBy('DAY(battle.battleTime), battle.result');
+      battleQuery
+        .addSelect('DATE(battle.battleTime) AS battleDate')
+        .groupBy('battleDate, battle.result');
     } else if (filters.dateRange === 'thisYear') {
-      battleQuery.groupBy('MONTH(battle.battleTime), battle.result');
+      battleQuery
+        .addSelect(
+          "CONCAT(YEAR(battle.battleTime), '-', LPAD(MONTH(battle.battleTime), 2, '0')) AS battleDate",
+        )
+        .groupBy('battleDate, battle.result');
     } else if (filters.dateRange === 'last10Years') {
-      battleQuery.groupBy('YEAR(battle.battleTime), battle.result');
+      battleQuery
+        .addSelect('YEAR(battle.battleTime) AS battleDate')
+        .groupBy('battleDate, battle.result');
     } else {
-      battleQuery.groupBy('DAY(battle.battleTime), battle.result');
+      battleQuery
+        .addSelect('DATE(battle.battleTime) AS battleDate')
+        .groupBy('battleDate, battle.result');
     }
+    battleQuery.orderBy('battleDate');
     return battleQuery;
   }
 
