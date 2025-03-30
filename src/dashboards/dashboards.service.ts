@@ -269,20 +269,20 @@ export class DashboardsService {
    * @param filters
    */
   async battlesStats(profile, filters: FilterBattleDto) {
-    const battlesPerDay = await this.getBattlesPerDay(profile, filters);
+    const battlesInDateRange = await this.getBattlesInDateRange(profile, filters);
     const battlesPerMode = await this.getBattlesPerEvent(profile, filters);
-    const averageTrophyChangePerDay = await this.getAverageTrophyChangePerDay(profile, filters);
-    const averageTrophyChangePerMode = await this.getAverageTrophyChangePerMode(profile, filters);
+    const trophyChangeInDateRange = await this.getTrophyChangeInDateRange(profile, filters);
+    const trophyChangePerMode = await this.getTrophyChangePerMode(profile, filters);
 
     return {
-      battlesPerDay,
+      battlesInDateRange,
       battlesPerMode,
-      averageTrophyChangePerDay,
-      averageTrophyChangePerMode
+      trophyChangeInDateRange,
+      trophyChangePerMode,
     };
   }
 
-  async getBattlesPerDay(profile, filters: FilterBattleDto) {
+  async getBattlesInDateRange(profile, filters: FilterBattleDto) {
     let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .select([
@@ -293,7 +293,7 @@ export class DashboardsService {
       .andWhere('battle.result is not null');
 
     battleQuery = this.filterBattleByDateRange(battleQuery, filters);
-    battleQuery = this.groupByBattleByDateRange(battleQuery, filters);
+    battleQuery = this.groupByBattleByDateRange(battleQuery, filters, true);
 
     const results = await battleQuery.getRawMany();
 
@@ -326,7 +326,7 @@ export class DashboardsService {
     }));
   }
 
-  async getAverageTrophyChangePerDay(profile, filters: FilterBattleDto) {
+  async getTrophyChangeInDateRange(profile, filters: FilterBattleDto) {
     let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .select([
@@ -343,11 +343,11 @@ export class DashboardsService {
     return results.map((item) => ({
       ...item,
       averageTrophyChange: Number(item.averageTrophyChange),
-      totalTrophyChange: Number(item.totalTrophyChange)
+      totalTrophyChange: Number(item.totalTrophyChange),
     }));
   }
 
-  async getAverageTrophyChangePerMode(profile, filters: FilterBattleDto) {
+  async getTrophyChangePerMode(profile, filters: FilterBattleDto) {
     let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('event', 'event', 'event.id = battle.eventId')
@@ -390,26 +390,32 @@ export class DashboardsService {
   groupByBattleByDateRange(
     battleQuery: SelectQueryBuilder<Battle>,
     filters: FilterBattleDto,
+    includeResults: boolean = false,
   ): SelectQueryBuilder<Battle> {
     if (filters.dateRange === 'thisMonth') {
       battleQuery
         .addSelect('DATE(battle.battleTime) AS battleDate')
-        .groupBy('battleDate, battle.result');
+        .addGroupBy('battleDate');
     } else if (filters.dateRange === 'thisYear') {
       battleQuery
         .addSelect(
           "CONCAT(YEAR(battle.battleTime), '-', LPAD(MONTH(battle.battleTime), 2, '0')) AS battleDate",
         )
-        .groupBy('battleDate, battle.result');
+        .addGroupBy('battleDate');
     } else if (filters.dateRange === 'last10Years') {
       battleQuery
         .addSelect('YEAR(battle.battleTime) AS battleDate')
-        .groupBy('battleDate, battle.result');
+        .addGroupBy('battleDate');
     } else {
       battleQuery
         .addSelect('DATE(battle.battleTime) AS battleDate')
-        .groupBy('battleDate, battle.result');
+        .addGroupBy('battleDate');
     }
+
+    if (includeResults) {
+      battleQuery.addGroupBy('battle.result');
+    }
+
     battleQuery.orderBy('battleDate');
     return battleQuery;
   }
@@ -421,11 +427,11 @@ export class DashboardsService {
    */
   async brawlersStats(profile, filters: FilterBattleDto) {
     const battlesPerBrawler = await this.getBattlesPerBrawler(profile, filters);
-    const averageTrophyChangePerBrawler = await this.getAverageTrophyChangePerBrawler(profile, filters);
+    const trophyChangePerBrawler = await this.getAverageTrophyChangePerBrawler(profile, filters);
 
     return {
       battlesPerBrawler,
-      averageTrophyChangePerBrawler
+      trophyChangePerBrawler
     };
   }
 
