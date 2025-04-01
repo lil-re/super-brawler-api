@@ -12,12 +12,13 @@ import { StatsService } from './stats.service';
 import { CreateStatDto } from './dto/create-stat.dto';
 import { UpdateStatDto } from './dto/update-stat.dto';
 import { ProfileGuard } from '../auth/profile.guard';
+import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('stats')
 export class StatsController {
   constructor(private readonly statsService: StatsService) {}
 
-  @UseGuards(ProfileGuard)
+  @UseGuards(AuthGuard)
   @Post()
   create(@Body() creatStatDto: CreateStatDto) {
     return this.statsService.create(creatStatDto);

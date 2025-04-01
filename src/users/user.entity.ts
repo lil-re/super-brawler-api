@@ -22,6 +22,9 @@ export class User {
   @Column({ default: 'lightTheme' })
   theme: string;
 
+  @Column({ default: false })
+  isAdmin: string;
+
   @OneToMany(() => Profile, (profile) => profile.user)
   profiles: Profile[];
 }

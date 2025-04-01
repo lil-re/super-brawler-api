@@ -20,7 +20,7 @@ import { DashboardsModule } from './dashboards/dashboards.module';
     AuthModule,
     ScheduleModule.forRoot(),
     ConfigModule.forRoot(),
-    CronModule,
+    // CronModule,
     DashboardsModule,
   ],
 })

@@ -310,11 +310,11 @@ export class DashboardsService {
       .select([
         'count(battle.id) as numberOfBattles',
         'event.mode as mode',
-        'battle.result as result',
+        'battle.result as battleResult',
       ])
       .where('battle.profileId = :profileId', { profileId: profile.id })
       .orderBy('event.mode', 'ASC')
-      .groupBy('event.mode, battle.result');
+      .groupBy('event.mode, battleResult');
 
     battleQuery = this.filterBattleByDateRange(battleQuery, filters);
 
@@ -442,11 +442,11 @@ export class DashboardsService {
       .select([
         'count(battle.id) as numberOfBattles',
         'player.brawlerName as brawlerName',
-        'battle.result as result',
+        'battle.result as battleResult',
       ])
       .where('battle.profileId = :profileId', { profileId: profile.id })
       .andWhere('player.tag = :profileTag', { profileTag: profile.tag })
-      .groupBy('player.brawlerName, battle.result');
+      .groupBy('player.brawlerName, battleResult');
 
     battleQuery = this.filterBattleByDateRange(battleQuery, filters);
 
