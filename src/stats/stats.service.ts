@@ -39,38 +39,4 @@ export class StatsService {
     }
     return this.statRepository.save(newStat);
   }
-
-  findAll() {
-    return this.statRepository.find();
-  }
-
-  async findOne(id: number) {
-    const stat = await this.statRepository.findOneBy({ id });
-
-    if (!stat) {
-      throw new Error(`Stat with id ${id} not found`);
-    }
-    return stat;
-  }
-
-  async update(id: number, updateStatDto: UpdateStatDto) {
-    const stat = await this.statRepository.preload({
-      id,
-      ...updateStatDto,
-    });
-
-    if (!stat) {
-      throw new Error(`Stat with id ${id} not found`);
-    }
-    return this.statRepository.save(stat);
-  }
-
-  async remove(id: number) {
-    const stat = await this.statRepository.findOneBy({ id });
-
-    if (!stat) {
-      throw new Error(`Stat with id ${id} not found`);
-    }
-    await this.statRepository.remove(stat);
-  }
 }

@@ -46,42 +46,6 @@ export class BattlesService {
     return battle;
   }
 
-  async findAll(): Promise<Battle[]> {
-    return this.battleRepository.find({
-      relations: ['event', 'players'],
-    });
-  }
-
-  async findOne(id: number): Promise<Battle> {
-    const battle = await this.battleRepository.findOneBy({ id });
-
-    if (!battle) {
-      throw new Error(`Battle with id ${id} not found`);
-    }
-    return battle;
-  }
-
-  async update(id: number, updateBattleDto: UpdateBattleDto): Promise<Battle> {
-    const battle = await this.battleRepository.preload({
-      id,
-      ...updateBattleDto,
-    });
-
-    if (!battle) {
-      throw new Error(`Battle with id ${id} not found`);
-    }
-    return this.battleRepository.save(battle);
-  }
-
-  async remove(id: number): Promise<void> {
-    const battle = await this.battleRepository.findOneBy({ id });
-
-    if (!battle) {
-      throw new Error(`Battle with id ${id} not found`);
-    }
-    await this.battleRepository.remove(battle);
-  }
-
   private async handleNewEvent(createBattleDto: CreateBattleDto) {
     if (createBattleDto?.event?.id) {
       return this.eventsService.create({
