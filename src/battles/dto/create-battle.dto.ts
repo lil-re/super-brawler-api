@@ -30,6 +30,7 @@ export class CreateBattleBrawlerDto {
 }
 
 export class CreateBattleDto {
+  readonly profileId: string;
   readonly profileTag: string;
   readonly battleTime: string;
   readonly event: CreateBattleEventDto;

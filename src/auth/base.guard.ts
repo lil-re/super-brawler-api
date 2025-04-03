@@ -17,7 +17,7 @@ export class BaseGuard {
     return type === 'Bearer' ? token : undefined;
   }
 
-  public extractProfileIdFromHeader(request: Request): number | undefined {
-    return Number(request.headers.profile);
+  public extractProfileIdFromHeader(request: Request): string | undefined {
+    return `${request.headers.profile}`;
   }
 }

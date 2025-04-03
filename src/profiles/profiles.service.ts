@@ -29,7 +29,7 @@ export class ProfilesService {
     return this.profileRepository.find();
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const profile = await this.profileRepository.findOne({
       where: { id },
       relations: ['user'],
@@ -41,8 +41,9 @@ export class ProfilesService {
     return profile;
   }
 
-  async findOneByTag(tag: string) {
-    const profile = await this.profileRepository.findOneBy({ tag });
+
+  async findOneByIdAndTag(id: string, tag: string) {
+    const profile = await this.profileRepository.findOneBy({ id, tag });
 
     if (!profile) {
       throw new Error(`Player with tag ${tag} not found`);
@@ -50,7 +51,7 @@ export class ProfilesService {
     return profile;
   }
 
-  async update(id: number, updateProfileDto: UpdateProfileDto) {
+  async update(id: string, updateProfileDto: UpdateProfileDto) {
     const profile = await this.profileRepository.preload({
       id,
       ...updateProfileDto,
@@ -62,7 +63,7 @@ export class ProfilesService {
     return this.profileRepository.save(profile);
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     const profile = await this.profileRepository.findOneBy({ id });
 
     if (!profile) {

@@ -72,7 +72,7 @@ export class UsersService {
     return user;
   }
 
-  async findAllEventModesByProfile(profileId: number) {
+  async findAllEventModesByProfile(profileId: string) {
     const data = await this.battleRepository
       .createQueryBuilder('battle')
       .select(["event.mode"])
@@ -84,7 +84,7 @@ export class UsersService {
     return data.map((item) => item.event_mode);
   }
 
-  async findAllEventMapsByProfile(profileId: number) {
+  async findAllEventMapsByProfile(profileId: string) {
     const data = await this.battleRepository
       .createQueryBuilder('battle')
       .select(["event.map"])
@@ -96,7 +96,7 @@ export class UsersService {
     return data.map((item) => item.event_map);
   }
 
-  async findAllBrawlersByProfile(profileId: number) {
+  async findAllBrawlersByProfile(profileId: string) {
     const data = await this.battleRepository
       .createQueryBuilder('battle')
       .select(["player.brawlerName"])

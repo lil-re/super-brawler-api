@@ -1,4 +1,5 @@
 export class CreateStatDto {
+  readonly profileId: string;
   readonly tag: string;
   readonly trophies: number;
   readonly highestTrophies: number;

@@ -29,7 +29,8 @@ export class BattlesService {
 
   async create(createBattleDto: CreateBattleDto) {
     // Handle Profile
-    const profile = await this.profilesService.findOneByTag(
+    const profile = await this.profilesService.findOneByIdAndTag(
+      createBattleDto.profileId,
       createBattleDto.profileTag,
     );
 
