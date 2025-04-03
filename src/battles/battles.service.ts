@@ -9,7 +9,6 @@ import { Profile } from '../profiles/profile.entity';
 import { EventsService } from '../events/events.service';
 import { PlayersService } from '../players/players.service';
 import { ProfilesService } from '../profiles/profiles.service';
-import { UpdateBattleDto } from './dto/update-battle.dto';
 import { CreateBattleDto } from './dto/create-battle.dto';
 
 dayjs.extend(utc);
