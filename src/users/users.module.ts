@@ -7,6 +7,7 @@ import { ProfilesModule } from '../profiles/profiles.module';
 import { EventsModule } from '../events/events.module';
 import { PlayersModule } from '../players/players.module';
 import { BattlesModule } from '../battles/battles.module';
+import { BrawlStarsModule } from '../brawlstars/brawlStars.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { BattlesModule } from '../battles/battles.module';
     BattlesModule,
     EventsModule,
     PlayersModule,
+    BrawlStarsModule
   ],
   controllers: [UsersController],
   providers: [...userProviders, UsersService],

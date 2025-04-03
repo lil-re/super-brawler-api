@@ -1,14 +1,15 @@
 import {
   Column,
-  Entity, OneToMany,
+  Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Profile } from '../profiles/profile.entity';
 
 @Entity()
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   email: string;
@@ -23,7 +24,7 @@ export class User {
   theme: string;
 
   @Column({ default: false })
-  isAdmin: string;
+  isAdmin: boolean;
 
   @OneToMany(() => Profile, (profile) => profile.user)
   profiles: Profile[];

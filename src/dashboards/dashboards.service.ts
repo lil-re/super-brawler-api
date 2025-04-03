@@ -1,11 +1,16 @@
-import { Inject, Injectable } from '@nestjs/common';
+import * as dayjs from 'dayjs';
 import { Repository, SelectQueryBuilder } from 'typeorm';
+import { Inject, Injectable } from '@nestjs/common';
 import { Battle } from '../battles/battle.entity';
 import { Stat } from '../stats/stat.entity';
 import { FilterBattleDto } from '../battles/dto/filter-battle.dto';
 import { FilterStatDto } from '../stats/dto/filter-stat.dto';
-import { SearchBattleDto, SearchEventMode, SearchEventType, SearchMapType } from '../battles/dto/search-battle.dto';
-import * as dayjs from 'dayjs';
+import {
+  SearchBattleDto,
+  SearchEventMode,
+  SearchEventType,
+  SearchMapType,
+} from '../battles/dto/search-battle.dto';
 
 @Injectable()
 export class DashboardsService {
@@ -79,11 +84,19 @@ export class DashboardsService {
     return {
       items,
       pages: Number(pages.pageCount),
-    }
+    };
   }
 
   async getSearchCount(profile, filters: SearchBattleDto) {
-    const { pageSize, date, dateRange, eventType, eventMode, mapType, brawlerName } = filters;
+    const {
+      pageSize,
+      date,
+      dateRange,
+      eventType,
+      eventMode,
+      mapType,
+      brawlerName,
+    } = filters;
 
     let query = this.battleRepository
       .createQueryBuilder('battle')
@@ -111,7 +124,8 @@ export class DashboardsService {
   }
 
   async getSearchResults(profile, filters: SearchBattleDto) {
-    const { date, dateRange, eventType, eventMode, mapType, brawlerName } = filters;
+    const { date, dateRange, eventType, eventMode, mapType, brawlerName } =
+      filters;
 
     // Base query
     let query = this.battleRepository
@@ -171,7 +185,7 @@ export class DashboardsService {
     } else if (mapType === 'original') {
       query.andWhere('event.eventId is not null');
     }
-    return query
+    return query;
   }
 
   searchByBrawler(
@@ -197,7 +211,11 @@ export class DashboardsService {
     }
     // Or filter by date range
     else if (dateRange) {
-      const today = dayjs.utc().set('hour', 0).set('minute', 0).set('second', 0);
+      const today = dayjs
+        .utc()
+        .set('hour', 0)
+        .set('minute', 0)
+        .set('second', 0);
       let startOfRange;
 
       switch (dateRange) {
@@ -224,9 +242,18 @@ export class DashboardsService {
   paginateSearch(
     query: SelectQueryBuilder<Battle>,
     profile,
-    filters: SearchBattleDto
+    filters: SearchBattleDto,
   ): SelectQueryBuilder<Battle> {
-    const { page, pageSize, date, dateRange, eventType, eventMode, mapType, brawlerName } = filters;
+    const {
+      page,
+      pageSize,
+      date,
+      dateRange,
+      eventType,
+      eventMode,
+      mapType,
+      brawlerName,
+    } = filters;
 
     return query
       .innerJoin(
@@ -239,7 +266,9 @@ export class DashboardsService {
             .addSelect('event.mode')
             .innerJoin('battle.players', 'player')
             .andWhere('player.tag = :playerTag', { playerTag: profile.tag })
-            .andWhere('battle.profileId = :profileId', { profileId: profile.id })
+            .andWhere('battle.profileId = :profileId', {
+              profileId: profile.id,
+            })
             .orderBy('battle.battleTime', 'DESC');
 
           // Filter by event type (team vs team or showdown)
@@ -269,10 +298,19 @@ export class DashboardsService {
    * @param filters
    */
   async battlesStats(profile, filters: FilterBattleDto) {
-    const battlesInDateRange = await this.getBattlesInDateRange(profile, filters);
+    const battlesInDateRange = await this.getBattlesInDateRange(
+      profile,
+      filters,
+    );
     const battlesPerMode = await this.getBattlesPerEvent(profile, filters);
-    const trophyChangeInDateRange = await this.getTrophyChangeInDateRange(profile, filters);
-    const trophyChangePerMode = await this.getTrophyChangePerMode(profile, filters);
+    const trophyChangeInDateRange = await this.getTrophyChangeInDateRange(
+      profile,
+      filters,
+    );
+    const trophyChangePerMode = await this.getTrophyChangePerMode(
+      profile,
+      filters,
+    );
 
     return {
       battlesInDateRange,
@@ -299,7 +337,7 @@ export class DashboardsService {
 
     return results.map((item) => ({
       ...item,
-      numberOfBattles: Number(item.numberOfBattles)
+      numberOfBattles: Number(item.numberOfBattles),
     }));
   }
 
@@ -322,7 +360,7 @@ export class DashboardsService {
 
     return results.map((item) => ({
       ...item,
-      numberOfBattles: Number(item.numberOfBattles)
+      numberOfBattles: Number(item.numberOfBattles),
     }));
   }
 
@@ -367,7 +405,7 @@ export class DashboardsService {
     return results.map((item) => ({
       ...item,
       averageTrophyChange: Number(item.averageTrophyChange),
-      totalTrophyChange: Number(item.totalTrophyChange)
+      totalTrophyChange: Number(item.totalTrophyChange),
     }));
   }
 
@@ -427,11 +465,14 @@ export class DashboardsService {
    */
   async brawlersStats(profile, filters: FilterBattleDto) {
     const battlesPerBrawler = await this.getBattlesPerBrawler(profile, filters);
-    const trophyChangePerBrawler = await this.getAverageTrophyChangePerBrawler(profile, filters);
+    const trophyChangePerBrawler = await this.getAverageTrophyChangePerBrawler(
+      profile,
+      filters,
+    );
 
     return {
       battlesPerBrawler,
-      trophyChangePerBrawler
+      trophyChangePerBrawler,
     };
   }
 
@@ -453,7 +494,7 @@ export class DashboardsService {
     const results = await battleQuery.getRawMany();
     return results.map((item) => ({
       ...item,
-      numberOfBattles: Number(item.numberOfBattles)
+      numberOfBattles: Number(item.numberOfBattles),
     }));
   }
 
@@ -476,7 +517,7 @@ export class DashboardsService {
     return results.map((item) => ({
       ...item,
       averageTrophyChange: Number(item.averageTrophyChange),
-      totalTrophyChange: Number(item.totalTrophyChange)
+      totalTrophyChange: Number(item.totalTrophyChange),
     }));
   }
 }

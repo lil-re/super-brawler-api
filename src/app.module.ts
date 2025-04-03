@@ -7,6 +7,10 @@ import { ProfilesModule } from './profiles/profiles.module';
 import { BattlesModule } from './battles/battles.module';
 import { DashboardsModule } from './dashboards/dashboards.module';
 import { ConfigModule } from '@nestjs/config';
+import { StatsModule } from './stats/stats.module';
+import { PlayersModule } from './players/players.module';
+import { EventsModule } from './events/events.module';
+import { BrawlStarsModule } from './brawlstars/brawlStars.module';
 // import { ScheduleModule } from '@nestjs/schedule';
 // import { CronModule } from './cron/cron.module';
 
@@ -17,9 +21,13 @@ import { ConfigModule } from '@nestjs/config';
     AuthModule,
     UsersModule,
     ProfilesModule,
+    StatsModule,
     BattlesModule,
+    EventsModule,
+    PlayersModule,
     DashboardsModule,
     ConfigModule.forRoot(),
+    BrawlStarsModule,
     // ScheduleModule.forRoot(),
     // CronModule,
   ],
