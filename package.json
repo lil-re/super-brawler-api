@@ -23,6 +23,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@nestjs/bullmq": "^11.0.2",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.1",
@@ -32,6 +33,7 @@
     "@nestjs/schedule": "^5.0.1",
     "@nestjs/typeorm": "^11.0.0",
     "bcrypt": "^5.1.1",
+    "bullmq": "^5.46.1",
     "dayjs": "^1.11.13",
     "ky": "^1.7.4",
     "mysql2": "^3.12.0",

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { userProviders } from './user.providers';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
@@ -8,6 +9,7 @@ import { EventsModule } from '../events/events.module';
 import { PlayersModule } from '../players/players.module';
 import { BattlesModule } from '../battles/battles.module';
 import { BrawlStarsModule } from '../brawlstars/brawlStars.module';
+import { CronModule } from '../cron/cron.module';
 
 @Module({
   imports: [
@@ -16,7 +18,11 @@ import { BrawlStarsModule } from '../brawlstars/brawlStars.module';
     BattlesModule,
     EventsModule,
     PlayersModule,
-    BrawlStarsModule
+    BrawlStarsModule,
+    CronModule,
+    BullModule.registerQueue({
+      name: 'cron',
+    }),
   ],
   controllers: [UsersController],
   providers: [...userProviders, UsersService],

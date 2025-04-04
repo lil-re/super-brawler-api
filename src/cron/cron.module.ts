@@ -1,11 +1,18 @@
 import { Module } from '@nestjs/common';
-import { CronService } from './cron.service';
+import { BullModule } from '@nestjs/bullmq';
 import { ProfilesModule } from '../profiles/profiles.module';
-import { BattlesModule } from '../battles/battles.module';
-import { StatsModule } from '../stats/stats.module';
+import { BrawlStarsModule } from '../brawlstars/brawlStars.module';
+import { CronService } from './cron.service';
+import { CronProcessor } from './cron.processor';
 
 @Module({
-  imports: [ProfilesModule, BattlesModule, StatsModule],
-  providers: [CronService],
+  imports: [
+    ProfilesModule,
+    BrawlStarsModule,
+    BullModule.registerQueue({
+      name: 'cron',
+    }),
+  ],
+  providers: [CronService, CronProcessor],
 })
 export class CronModule {}

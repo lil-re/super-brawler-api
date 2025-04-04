@@ -1,8 +1,10 @@
 import * as bcrypt from 'bcrypt';
+import { Repository } from 'typeorm';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { Inject, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { Battle } from '../battles/battle.entity';
 import { ProfilesService } from '../profiles/profiles.service';
@@ -20,6 +22,8 @@ export class UsersService {
     private profilesService: ProfilesService,
 
     private brawlStarsService: BrawlStarsService,
+
+    @InjectQueue('cron') private cronQueue: Queue,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -41,8 +45,12 @@ export class UsersService {
         username,
         userId: user.id,
       });
-      await this.brawlStarsService.handleProfileStats(profile.id);
-      await this.brawlStarsService.handleProfileBattles(profile.id);
+      await this.cronQueue.add('add-stats', {
+        profile,
+      });
+      await this.cronQueue.add('add-battles', {
+        profile,
+      });
     }
 
     return user;

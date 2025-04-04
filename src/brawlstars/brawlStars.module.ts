@@ -3,7 +3,6 @@ import { BrawlStarsService } from './brawlStars.service';
 import { BattlesModule } from '../battles/battles.module';
 import { StatsModule } from '../stats/stats.module';
 import { ProfilesModule } from '../profiles/profiles.module';
-import { UsersService } from '../users/users.service';
 
 @Module({
   imports: [ProfilesModule, BattlesModule, StatsModule],

@@ -1,8 +1,9 @@
 import ky from 'ky';
 import * as process from 'node:process';
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { BattlesService } from '../battles/battles.service';
-import { ProfilesService } from '../profiles/profiles.service';
 import { StatsService } from '../stats/stats.service';
 import { Profile } from '../profiles/profile.entity';
 import { CreateBattleDto } from '../battles/dto/create-battle.dto';
@@ -13,17 +14,13 @@ export class BrawlStarsService {
   private readonly logger = new Logger(BattlesService.name);
 
   constructor(
-    private profilesService: ProfilesService,
-
     private battlesService: BattlesService,
 
     private statsService: StatsService,
   ) {}
 
-  async handleProfileBattles(id: string) {
-    const profile = await this.profilesService.findOne(id);
-
-    if (profile.id) {
+  async handleProfileBattles(profile: Profile) {
+    if (profile?.id) {
       const data = await this.handleBattlesQuery(profile);
 
       if (data?.items) {
@@ -71,9 +68,7 @@ export class BrawlStarsService {
     }
   }
 
-  async handleProfileStats(id: string) {
-    const profile = await this.profilesService.findOne(id);
-
+  async handleProfileStats(profile: Profile) {
     if (profile.id) {
       const data = await this.handleStatsQuery(profile);
       await this.handleStatsData(profile.id, data);
