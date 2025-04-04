@@ -54,7 +54,7 @@ export class DashboardsService {
               .where('stat.createdAt >= CURDATE() - INTERVAL 7 DAY')
               .groupBy('DAY(stat.createdAt)');
           }
-          return subQuery;
+          return subQuery.where('stat.profileId = :profileId', { profileId: profile.id });
         },
         'latest_stats',
         'stat.createdAt = latest_stats.max_createdAt',
