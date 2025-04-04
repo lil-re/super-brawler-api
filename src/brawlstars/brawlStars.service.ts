@@ -1,8 +1,6 @@
 import ky from 'ky';
 import * as process from 'node:process';
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { BattlesService } from '../battles/battles.service';
 import { StatsService } from '../stats/stats.service';
 import { Profile } from '../profiles/profile.entity';
@@ -24,7 +22,7 @@ export class BrawlStarsService {
       const data = await this.handleBattlesQuery(profile);
 
       if (data?.items) {
-        await this.handleBattlesData(profile.id, data.items);
+        await this.handleBattlesData(profile, data.items);
       }
     }
   }
@@ -51,15 +49,16 @@ export class BrawlStarsService {
   }
 
   private async handleBattlesData(
-    profileId: string,
+    profile: Profile,
     items: Array<CreateBattleDto>,
   ) {
     if (items) {
       for (const item of items) {
         try {
           await this.battlesService.create({
-            profileId,
             ...item,
+            profileId: profile.id,
+            profileTag: profile.tag,
           });
         } catch (e) {
           this.logger.debug(e);
@@ -71,7 +70,7 @@ export class BrawlStarsService {
   async handleProfileStats(profile: Profile) {
     if (profile.id) {
       const data = await this.handleStatsQuery(profile);
-      await this.handleStatsData(profile.id, data);
+      await this.handleStatsData(profile, data);
     }
   }
 
@@ -93,12 +92,12 @@ export class BrawlStarsService {
     }
   }
 
-  private async handleStatsData(profileId: string, data: CreateStatDto) {
+  private async handleStatsData(profile: Profile, data: CreateStatDto) {
     if (data) {
       try {
         await this.statsService.create({
-          profileId,
           ...data,
+          profileId: profile.id,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           trioVictories: data['3vs3Victories'],
         });

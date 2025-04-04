@@ -118,16 +118,23 @@ export class BattlesService {
       const createBattleTeamDto = createBattleDto.battle.teams[i];
 
       for (const createBattlePlayerDto of createBattleTeamDto) {
-        await this.playersService.create({
-          tag: createBattlePlayerDto.tag,
-          name: createBattlePlayerDto.name,
-          brawlerId: createBattlePlayerDto.brawler.id,
-          brawlerName: createBattlePlayerDto.brawler.name,
-          power: createBattlePlayerDto.brawler.power,
-          trophies: createBattlePlayerDto.brawler.trophies,
-          battleId: battle.id,
-          team: i + 1,
-        });
+        console.log(
+          createBattlePlayerDto.tag,
+          createBattleDto.profileTag,
+          createBattlePlayerDto.tag === createBattleDto.profileTag,
+        );
+        if (createBattlePlayerDto.tag === createBattleDto.profileTag) {
+          await this.playersService.create({
+            tag: createBattlePlayerDto.tag,
+            name: createBattlePlayerDto.name,
+            brawlerId: createBattlePlayerDto.brawler.id,
+            brawlerName: createBattlePlayerDto.brawler.name,
+            power: createBattlePlayerDto.brawler.power,
+            trophies: createBattlePlayerDto.brawler.trophies,
+            battleId: battle.id,
+            team: i + 1,
+          });
+        }
       }
     }
   }
@@ -137,15 +144,17 @@ export class BattlesService {
     battle: Battle,
   ) {
     for (const createBattlePlayerDto of createBattleDto.battle.players) {
-      await this.playersService.create({
-        tag: createBattlePlayerDto.tag,
-        name: createBattlePlayerDto.name,
-        brawlerId: createBattlePlayerDto.brawler.id,
-        brawlerName: createBattlePlayerDto.brawler.name,
-        power: createBattlePlayerDto.brawler.power,
-        trophies: createBattlePlayerDto.brawler.trophies,
-        battleId: battle.id,
-      });
+      if (createBattlePlayerDto.tag === createBattleDto.profileTag) {
+        await this.playersService.create({
+          tag: createBattlePlayerDto.tag,
+          name: createBattlePlayerDto.name,
+          brawlerId: createBattlePlayerDto.brawler.id,
+          brawlerName: createBattlePlayerDto.brawler.name,
+          power: createBattlePlayerDto.brawler.power,
+          trophies: createBattlePlayerDto.brawler.trophies,
+          battleId: battle.id,
+        });
+      }
     }
   }
 
