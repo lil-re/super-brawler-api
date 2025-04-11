@@ -12,12 +12,7 @@ export class ProfilesService {
   ) {}
 
   async create(createProfileDto: CreateProfileDto) {
-    const profile = this.profileRepository.create({
-      ...createProfileDto,
-      user: {
-        id: createProfileDto.userId,
-      },
-    });
+    const profile = this.profileRepository.create(createProfileDto);
 
     if (!profile) {
       throw new Error(`Profile could not be created`);
@@ -41,6 +36,14 @@ export class ProfilesService {
     return profile;
   }
 
+  async findOneByTag(tag: string) {
+    const profile = await this.profileRepository.findOneBy({ tag });
+
+    if (!profile) {
+      throw new Error(`Player with tag ${tag} not found`);
+    }
+    return profile;
+  }
 
   async findOneByIdAndTag(id: string, tag: string) {
     const profile = await this.profileRepository.findOneBy({ id, tag });

@@ -1,11 +1,9 @@
 import {
   Column,
   Entity,
-  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { User } from '../users/user.entity';
 import { Battle } from '../battles/battle.entity';
 import { Stat } from '../stats/stat.entity';
 
@@ -19,9 +17,6 @@ export class Profile {
 
   @Column()
   tag: string;
-
-  @ManyToOne(() => User, (user) => user.profiles)
-  user: User;
 
   @OneToMany(() => Battle, (battle) => battle.profile)
   battles: Battle[];

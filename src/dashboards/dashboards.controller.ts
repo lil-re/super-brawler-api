@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { ProfileGuard } from '../auth/profile.guard';
 import { FilterStatDto } from '../stats/dto/filter-stat.dto';
 import { FilterBattleDto } from '../battles/dto/filter-battle.dto';

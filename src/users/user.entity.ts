@@ -1,10 +1,8 @@
 import {
   Column,
   Entity,
-  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Profile } from '../profiles/profile.entity';
 
 @Entity()
 export class User {
@@ -25,7 +23,4 @@ export class User {
 
   @Column({ default: false })
   isAdmin: boolean;
-
-  @OneToMany(() => Profile, (profile) => profile.user)
-  profiles: Profile[];
 }

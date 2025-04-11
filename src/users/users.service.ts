@@ -71,23 +71,20 @@ export class UsersService {
 
   async findOne(id: string) {
     // Get user with its profile
-    const user = await this.userRepository.findOne({
-      where: { id },
-      relations: ['profiles'],
-    });
+    const user = await this.userRepository.findOneBy({ id });
 
-    const brawlers = {};
-
-    // For each profile, get the associated brawlers
-    for (const profile of user.profiles) {
-      const list = await this.findAllBrawlersByProfile(profile.id);
-      brawlers[profile.id] = list;
-    }
+    // const brawlers = {};
+    //
+    // // For each profile, get the associated brawlers
+    // for (const profile of user.profiles) {
+    //   const list = await this.findAllBrawlersByProfile(profile.id);
+    //   brawlers[profile.id] = list;
+    // }
 
     if (!user) {
       throw new Error(`User with id ${id} not found`);
     }
-    return { user, brawlers };
+    return { user };
   }
 
   async findOneByEmail(email: string) {
