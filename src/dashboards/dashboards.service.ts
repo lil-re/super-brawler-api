@@ -520,4 +520,16 @@ export class DashboardsService {
       totalTrophyChange: Number(item.totalTrophyChange),
     }));
   }
+
+  async profileBrawlers(profileId: string) {
+    const data = await this.battleRepository
+      .createQueryBuilder('battle')
+      .select(['player.brawlerName'])
+      .innerJoin('battle.players', 'player')
+      .where('battle.profileId = :profileId', { profileId })
+      .groupBy('player.brawlerName')
+      .distinct(true)
+      .getRawMany();
+    return data.map((item) => item.player_brawlerName);
+  }
 }
