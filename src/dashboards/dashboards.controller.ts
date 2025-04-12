@@ -1,37 +1,40 @@
-import { Body, Controller, Param, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { ProfileGuard } from '../auth/profile.guard';
 import { FilterStatDto } from '../stats/dto/filter-stat.dto';
 import { FilterBattleDto } from '../battles/dto/filter-battle.dto';
 import { DashboardsService } from './dashboards.service';
 import { SearchBattleDto } from '../battles/dto/search-battle.dto';
+import { ProfilesService } from '../profiles/profiles.service';
 
 @Controller('dashboards')
 export class DashboardsController {
   constructor(
+    private readonly profilesService: ProfilesService,
+
     private readonly dashboardsService: DashboardsService
   ) {}
 
-  @UseGuards(ProfileGuard)
-  @Post('/profile-stats')
-  stats(@Request() req, @Body() filterStatDto: FilterStatDto) {
-    return this.dashboardsService.profileStats(req.profile, filterStatDto);
+  @Post(':tag/profile-stats')
+  async stats(@Param('tag') tag: string, @Body() filterStatDto: FilterStatDto) {
+    const profile = await this.profilesService.findOneByTag(tag);
+    return this.dashboardsService.profileStats(profile, filterStatDto);
   }
 
-  @UseGuards(ProfileGuard)
-  @Post('/battles-history')
-  search(@Request() req, @Body() searchBattleDto: SearchBattleDto) {
-    return this.dashboardsService.battleHistory(req.profile, searchBattleDto);
+  @Post(':tag/battles-history')
+  async search(@Param('tag') tag: string, @Body() searchBattleDto: SearchBattleDto) {
+    const profile = await this.profilesService.findOneByTag(tag);
+    return this.dashboardsService.battleHistory(profile, searchBattleDto);
   }
 
-  @UseGuards(ProfileGuard)
-  @Post('/battles-stats')
-  battles(@Request() req, @Body() filterBattleDto: FilterBattleDto) {
-    return this.dashboardsService.battlesStats(req.profile, filterBattleDto);
+  @Post(':tag/battles-stats')
+  async battles(@Param('tag') tag: string, @Body() filterBattleDto: FilterBattleDto) {
+    const profile = await this.profilesService.findOneByTag(tag);
+    return this.dashboardsService.battlesStats(profile, filterBattleDto);
   }
 
-  @UseGuards(ProfileGuard)
-  @Post('/brawlers-stats')
-  players(@Request() req, @Body() filterBattleDto: FilterBattleDto) {
-    return this.dashboardsService.brawlersStats(req.profile, filterBattleDto);
+  @Post(':tag/brawlers-stats')
+  async players(@Param('tag') tag: string, @Body() filterBattleDto: FilterBattleDto) {
+    const profile = await this.profilesService.findOneByTag(tag);
+    return this.dashboardsService.brawlersStats(profile, filterBattleDto);
   }
 }

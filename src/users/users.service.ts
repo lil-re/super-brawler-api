@@ -43,7 +43,6 @@ export class UsersService {
       const profile = await this.profilesService.create({
         tag,
         username,
-        userId: user.id,
       });
       await this.cronQueue.add('add-stats', {
         profile,

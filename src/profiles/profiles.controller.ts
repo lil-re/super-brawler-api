@@ -26,6 +26,21 @@ export class ProfilesController {
     return this.profilesService.findOne(id);
   }
 
+  @Get(':tag/track')
+  async track(@Param('tag') tag: string) {
+    const profile = await this.profilesService.findOneByTag(tag);
+
+    if (profile?.id) {
+      return profile
+    } else {
+      // TODO => fetch username from Brawl Stars API
+      return await this.profilesService.create({
+        tag,
+        username: ''
+      })
+    }
+  }
+
   @UseGuards(AuthGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateProfileDto: UpdateProfileDto) {
