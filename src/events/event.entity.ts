@@ -17,4 +17,7 @@ export class Event {
 
   @OneToMany(() => Battle, (battle) => battle.event)
   battles: Battle[];
+
+  @Column({ default: () => 'NOW()' })
+  createdAt: Date;
 }

@@ -13,7 +13,6 @@ import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { LogInDto } from './dto/log-in.dto';
 import { UsersService } from '../users/users.service';
-import { ProfileGuard } from './profile.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -41,20 +40,6 @@ export class AuthController {
     return {
       ...user,
       password: undefined
-    }
-  }
-
-  @UseGuards(ProfileGuard)
-  @Get('utils')
-  async getProfile(@Request() req) {
-    const modes = await this.usersService.findAllEventModesByProfile(req.profile.id);
-    const maps = await this.usersService.findAllEventMapsByProfile(req.profile.id);
-    const brawlers = await this.usersService.findAllBrawlersByProfile(req.profile.id);
-
-    return {
-      modes,
-      maps,
-      brawlers
     }
   }
 }

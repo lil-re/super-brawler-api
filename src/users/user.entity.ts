@@ -1,8 +1,9 @@
-import {
-  Column,
-  Entity,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+
+export enum UserRole {
+  ADMIN = 'admin',
+  MODERATOR = 'moderator',
+}
 
 @Entity()
 export class User {
@@ -18,9 +19,13 @@ export class User {
   @Column({ default: 'en' })
   language: string;
 
-  @Column({ default: 'lightTheme' })
-  theme: string;
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+    default: UserRole.MODERATOR,
+  })
+  role: UserRole;
 
-  @Column({ default: false })
-  isAdmin: boolean;
+  @Column({ default: () => 'NOW()' })
+  createdAt: Date;
 }

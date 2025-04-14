@@ -6,21 +6,20 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { jwtConstants } from './constants';
-import { BaseGuard } from './base.guard';
+import { Request } from 'express';
 
 @Injectable()
-export class AuthGuard extends BaseGuard implements CanActivate {
-  constructor(
-    private jwtService: JwtService,
-  ) {
-    super();
+export class AuthGuard implements CanActivate {
+  constructor(private jwtService: JwtService) {}
+
+  public extractTokenFromHeader(request: Request): string | undefined {
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
+    return type === 'Bearer' ? token : undefined;
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
-
-    console.log(token);
 
     if (!token) {
       throw new UnauthorizedException();
