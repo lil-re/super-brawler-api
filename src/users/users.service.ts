@@ -66,4 +66,12 @@ export class UsersService {
     }
     await this.userRepository.remove(user);
   }
+
+  async count() {
+    const data = await this.userRepository
+      .createQueryBuilder()
+      .select('count(id) as userCount')
+      .getRawOne();
+    return Number(data.userCount);
+  }
 }

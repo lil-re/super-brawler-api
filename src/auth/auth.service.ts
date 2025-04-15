@@ -26,15 +26,20 @@ export class AuthService {
   }
 
   async signUp(signUpDto: SignUpDto): Promise<{ accessToken: string }> {
-    const user = await this.usersService.create(signUpDto);
+    const userCount = await this.usersService.count();
 
-    if (!user) {
-      throw new UnauthorizedException();
+    if (userCount === 0) {
+      const user = await this.usersService.create(signUpDto);
+
+      if (!user) {
+        throw new UnauthorizedException();
+      }
+
+      const payload = { sub: user.id, email: user.email };
+      return {
+        accessToken: await this.jwtService.signAsync(payload),
+      };
     }
-
-    const payload = { sub: user.id, email: user.email };
-    return {
-      accessToken: await this.jwtService.signAsync(payload),
-    };
+    throw new Error(`Cannot create a new user`);
   }
 }
