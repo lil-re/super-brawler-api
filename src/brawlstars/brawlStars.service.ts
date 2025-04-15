@@ -61,7 +61,7 @@ export class BrawlStarsService {
             profileTag: profile.tag,
           });
         } catch (e) {
-          this.logger.debug(e);
+          this.logger.debug(e.message);
         }
       }
     }
@@ -102,7 +102,7 @@ export class BrawlStarsService {
           trioVictories: data['3vs3Victories'],
         });
       } catch (e) {
-        this.logger.debug(e);
+        this.logger.debug(e.message);
       }
     }
   }
