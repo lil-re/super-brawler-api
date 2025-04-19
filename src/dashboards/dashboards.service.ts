@@ -11,6 +11,7 @@ import {
   SearchEventType,
   SearchMapType,
 } from '../battles/dto/search-battle.dto';
+import { Profile } from '../profiles/profile.entity';
 
 @Injectable()
 export class DashboardsService {
@@ -87,7 +88,7 @@ export class DashboardsService {
     };
   }
 
-  async getSearchCount(profile, filters: SearchBattleDto) {
+  async getSearchCount(profile: Profile, filters: SearchBattleDto) {
     const {
       pageSize,
       date,
@@ -123,7 +124,7 @@ export class DashboardsService {
     return await query.getRawOne();
   }
 
-  async getSearchResults(profile, filters: SearchBattleDto) {
+  async getSearchResults(profile: Profile, filters: SearchBattleDto) {
     const { date, dateRange, eventType, eventMode, mapType, brawlerName } =
       filters;
 
@@ -155,6 +156,58 @@ export class DashboardsService {
 
     // Execute the query and return results
     return await query.getMany();
+  }
+
+  paginateSearch(
+    query: SelectQueryBuilder<Battle>,
+    profile: Profile,
+    filters: SearchBattleDto,
+  ): SelectQueryBuilder<Battle> {
+    const {
+      page,
+      pageSize,
+      date,
+      dateRange,
+      eventType,
+      eventMode,
+      mapType,
+      brawlerName,
+    } = filters;
+
+    return query
+      .innerJoin(
+        (subQuery: SelectQueryBuilder<Battle>) => {
+          subQuery
+            .select('battle.id as joinedId')
+            .from(Battle, 'battle')
+            .innerJoin('battle.event', 'event')
+            .addSelect('event.map')
+            .addSelect('event.mode')
+            .innerJoin('battle.players', 'player')
+            .andWhere('player.tag = :playerTag', { playerTag: profile.tag })
+            .andWhere('battle.profileId = :profileId', {
+              profileId: profile.id,
+            })
+            .orderBy('battle.battleTime', 'DESC');
+
+          // Filter by event type (team vs team or showdown)
+          subQuery = this.searchByEventType(subQuery, eventType, eventMode);
+
+          // Filter by map type (community maps or original map)
+          subQuery = this.searchByMapType(subQuery, mapType);
+
+          // Filter by brawler name
+          subQuery = this.searchByBrawler(subQuery, brawlerName);
+
+          // Filter by exact date
+          subQuery = this.searchByDate(subQuery, date, dateRange);
+
+          return subQuery.limit(pageSize).offset((page - 1) * pageSize);
+        },
+        'battle2',
+        'battle.id = battle2.joinedId',
+      )
+      .orderBy('battle.battleTime', 'DESC');
   }
 
   searchByEventType(
@@ -237,58 +290,6 @@ export class DashboardsService {
       });
     }
     return query;
-  }
-
-  paginateSearch(
-    query: SelectQueryBuilder<Battle>,
-    profile,
-    filters: SearchBattleDto,
-  ): SelectQueryBuilder<Battle> {
-    const {
-      page,
-      pageSize,
-      date,
-      dateRange,
-      eventType,
-      eventMode,
-      mapType,
-      brawlerName,
-    } = filters;
-
-    return query
-      .innerJoin(
-        (subQuery: SelectQueryBuilder<Battle>) => {
-          subQuery
-            .select('battle.id as joinedId')
-            .from(Battle, 'battle')
-            .innerJoin('battle.event', 'event')
-            .addSelect('event.map')
-            .addSelect('event.mode')
-            .innerJoin('battle.players', 'player')
-            .andWhere('player.tag = :playerTag', { playerTag: profile.tag })
-            .andWhere('battle.profileId = :profileId', {
-              profileId: profile.id,
-            })
-            .orderBy('battle.battleTime', 'DESC');
-
-          // Filter by event type (team vs team or showdown)
-          subQuery = this.searchByEventType(subQuery, eventType, eventMode);
-
-          // Filter by map type (community maps or original map)
-          subQuery = this.searchByMapType(subQuery, mapType);
-
-          // Filter by brawler name
-          subQuery = this.searchByBrawler(subQuery, brawlerName);
-
-          // Filter by exact date
-          subQuery = this.searchByDate(subQuery, date, dateRange);
-
-          return subQuery.limit(pageSize).offset((page - 1) * pageSize);
-        },
-        'battle2',
-        'battle.id = battle2.joinedId',
-      )
-      .orderBy('battle.battleTime', 'DESC');
   }
 
   /**

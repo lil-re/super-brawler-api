@@ -1,8 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AuthGuard } from '../auth/auth.guard';
+import { SearchProfileDto } from './dto/search-profile.dto';
 
 @Controller('profiles')
 export class ProfilesController {
@@ -51,5 +61,11 @@ export class ProfilesController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.profilesService.remove(id);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('search')
+  async search(@Body() searchProfileDto: SearchProfileDto) {
+    return await this.profilesService.search(searchProfileDto);
   }
 }

@@ -1,11 +1,11 @@
-import {
-  Column,
-  Entity,
-  OneToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Battle } from '../battles/battle.entity';
 import { Stat } from '../stats/stat.entity';
+
+export enum ProfileStatus {
+  ACTIVE = 'active',
+  DISABLED = 'disabled',
+}
 
 @Entity()
 export class Profile {
@@ -13,10 +13,20 @@ export class Profile {
   id: string;
 
   @Column()
-  username: string;
+  tag: string;
 
   @Column()
-  tag: string;
+  username: string;
+
+  @Column({
+    type: 'enum',
+    enum: ProfileStatus,
+    default: ProfileStatus.ACTIVE,
+  })
+  status: ProfileStatus;
+
+  @Column({ default: () => 'NOW()' })
+  createdAt: Date;
 
   @OneToMany(() => Battle, (battle) => battle.profile)
   battles: Battle[];

@@ -1,10 +1,11 @@
+import { Queue } from 'bullmq';
+import { Repository, SelectQueryBuilder } from 'typeorm';
+import { InjectQueue } from '@nestjs/bullmq';
 import { Inject, Injectable } from '@nestjs/common';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { Repository } from 'typeorm';
+import { SearchProfileDto } from './dto/search-profile.dto';
 import { Profile } from './profile.entity';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 
 @Injectable()
 export class ProfilesService {
@@ -32,10 +33,7 @@ export class ProfilesService {
   }
 
   async findOne(id: string) {
-    const profile = await this.profileRepository.findOne({
-      where: { id },
-      relations: ['user'],
-    });
+    const profile = await this.profileRepository.findOneBy({ id });
 
     if (!profile) {
       throw new Error(`Profile with id ${id} not found`);
@@ -83,5 +81,144 @@ export class ProfilesService {
     }
     await this.profileRepository.remove(profile);
     return true;
+  }
+
+  /**
+   * Search profiles
+   *
+   * @param filters
+   */
+  async search(filters: SearchProfileDto) {
+    const items = await this.getSearchResults(filters);
+    const pages = await this.getSearchCount(filters);
+
+    return {
+      items,
+      pages: Number(pages.pageCount),
+    };
+  }
+
+  private async getSearchCount(filters: SearchProfileDto) {
+    const { pageSize, search, status } = filters;
+
+    let query = this.profileRepository
+      .createQueryBuilder('profile')
+      .select('CEIL(COUNT(profile.id) / :pageSize)', 'pageCount')
+      .setParameter('pageSize', pageSize);
+
+    // Search by tag
+    query = this.searchByEmail(query, search);
+
+    // Filter by status
+    query = this.filterByRole(query, status);
+
+    // Pagination
+    query = this.paginateSearch(query, filters);
+
+    // Execute the query and return results
+    return await query.getRawOne();
+  }
+
+  private async getSearchResults(filters: SearchProfileDto) {
+    const { search, status, orderByValue, orderByDirection } = filters;
+
+    // Base query
+    let query = this.profileRepository
+      .createQueryBuilder('profile')
+      .addSelect('profile.id')
+      .addSelect('profile.tag')
+      .addSelect('profile.username')
+      .addSelect('profile.status')
+      .addSelect('profile.createdAt');
+
+    // Search by tag
+    query = this.searchByEmail(query, search);
+
+    // Filter by status
+    query = this.filterByRole(query, status);
+
+    // Pagination
+    query = this.paginateSearch(query, filters);
+
+    // Order by value
+    query = this.orderByValue(query, orderByValue, orderByDirection);
+
+    // Execute the query and return results
+    return await query.getMany();
+  }
+
+  private paginateSearch(
+    query: SelectQueryBuilder<Profile>,
+    filters: SearchProfileDto,
+  ): SelectQueryBuilder<Profile> {
+    const { page, pageSize, search, status, orderByValue, orderByDirection } =
+      filters;
+
+    return query.innerJoin(
+      (subQuery: SelectQueryBuilder<Profile>) => {
+        subQuery
+          .select('profile_page.id as joinedId')
+          .from(Profile, 'profile_page')
+          .addSelect('profile_page.tag')
+          .addSelect('profile_page.username')
+          .addSelect('profile_page.status')
+          .addSelect('profile_page.createdAt');
+
+        // Search by tag
+        subQuery = this.searchByEmail(subQuery, search);
+
+        // Filter by status
+        subQuery = this.filterByRole(subQuery, status);
+
+        // Order by value
+        subQuery = this.orderByValue(
+          subQuery,
+          orderByValue,
+          orderByDirection,
+          'profile_page',
+        );
+
+        return subQuery.limit(pageSize).offset((page - 1) * pageSize);
+      },
+      'profile2',
+      'profile.id = profile2.joinedId',
+    );
+  }
+
+  private searchByEmail(
+    query: SelectQueryBuilder<Profile>,
+    search: string,
+  ): SelectQueryBuilder<Profile> {
+    if (search && search.length > 0) {
+      query.andWhere('profile.tag LIKE :search', { search: `%${search}%` });
+    }
+
+    return query;
+  }
+
+  private filterByRole(
+    query: SelectQueryBuilder<Profile>,
+    status: string,
+  ): SelectQueryBuilder<Profile> {
+    if (status && status.length > 0) {
+      query.andWhere('profile.status = :status', { status });
+    }
+
+    return query;
+  }
+
+  private orderByValue(
+    query: SelectQueryBuilder<Profile>,
+    orderByValue: string,
+    orderByDirection: 'ASC' | 'DESC',
+    alias: string = 'profile',
+  ): SelectQueryBuilder<Profile> {
+    if (orderByValue && orderByValue.length > 0 && orderByDirection) {
+      query.orderBy(`${alias}.${orderByValue}`, orderByDirection);
+    } else {
+      query.orderBy(`${alias}.tag`, 'DESC');
+    }
+
+    return query;
   }
 }
