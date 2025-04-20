@@ -43,12 +43,12 @@ export class ProfilesService {
 
   async findOneByTag(tag: string) {
     const profile = await this.profileRepository.findOneBy({
-      tag: tag.includes('#') ? tag : `#${tag}`
+      tag: tag.includes('#') ? tag : `#${tag}`,
     });
 
-    if (!profile) {
-      throw new Error(`Player with tag ${tag} not found`);
-    }
+    // if (!profile) {
+    //   throw new Error(`Player with tag ${tag} not found`);
+    // }
     return profile;
   }
 
@@ -190,7 +190,7 @@ export class ProfilesService {
     search: string,
   ): SelectQueryBuilder<Profile> {
     if (search && search.length > 0) {
-      query.andWhere('profile.tag LIKE :search', { search: `%${search}%` });
+      query.andWhere('tag LIKE :search', { search: `%${search}%` });
     }
 
     return query;
@@ -201,7 +201,7 @@ export class ProfilesService {
     status: string,
   ): SelectQueryBuilder<Profile> {
     if (status && status.length > 0) {
-      query.andWhere('profile.status = :status', { status });
+      query.andWhere('status = :status', { status });
     }
 
     return query;

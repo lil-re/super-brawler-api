@@ -92,7 +92,7 @@ export class UsersService {
   }
 
   private async getSearchCount(filters: SearchUserDto) {
-    const { pageSize, search, role, orderByValue, orderByDirection } = filters;
+    const { pageSize, search, role } = filters;
 
     let query = this.userRepository
       .createQueryBuilder('user')
@@ -181,7 +181,7 @@ export class UsersService {
     search: string,
   ): SelectQueryBuilder<User> {
     if (search && search.length > 0) {
-      query.andWhere('user.email LIKE :search', { search: `%${search}%` });
+      query.andWhere('email LIKE :search', { search: `%${search}%` });
     }
 
     return query;
@@ -192,7 +192,7 @@ export class UsersService {
     role: string,
   ): SelectQueryBuilder<User> {
     if (role && role.length > 0) {
-      query.andWhere('user.role = :role', { role });
+      query.andWhere('role = :role', { role });
     }
 
     return query;

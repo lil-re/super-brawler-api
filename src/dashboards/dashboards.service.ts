@@ -29,7 +29,7 @@ export class DashboardsService {
    * @param profile
    * @param filters
    */
-  async profileStats(profile, filters: FilterStatDto) {
+  async profileStats(profile: Profile, filters: FilterStatDto) {
     return this.statRepository
       .createQueryBuilder('stat')
       .innerJoin(
@@ -55,7 +55,9 @@ export class DashboardsService {
               .where('stat.createdAt >= CURDATE() - INTERVAL 7 DAY')
               .groupBy('DAY(stat.createdAt)');
           }
-          return subQuery.where('stat.profileId = :profileId', { profileId: profile.id });
+          return subQuery.where('stat.profileId = :profileId', {
+            profileId: profile.id,
+          });
         },
         'latest_stats',
         'stat.createdAt = latest_stats.max_createdAt',
@@ -78,7 +80,7 @@ export class DashboardsService {
    * @param profile
    * @param filters
    */
-  async battleHistory(profile, filters: SearchBattleDto) {
+  async battleHistory(profile: Profile, filters: SearchBattleDto) {
     const items = await this.getSearchResults(profile, filters);
     const pages = await this.getSearchCount(profile, filters);
 
@@ -298,7 +300,7 @@ export class DashboardsService {
    * @param profile
    * @param filters
    */
-  async battlesStats(profile, filters: FilterBattleDto) {
+  async battlesStats(profile: Profile, filters: FilterBattleDto) {
     const battlesInDateRange = await this.getBattlesInDateRange(
       profile,
       filters,
@@ -321,7 +323,7 @@ export class DashboardsService {
     };
   }
 
-  async getBattlesInDateRange(profile, filters: FilterBattleDto) {
+  async getBattlesInDateRange(profile: Profile, filters: FilterBattleDto) {
     let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .select([
@@ -342,7 +344,7 @@ export class DashboardsService {
     }));
   }
 
-  async getBattlesPerEvent(profile, filters: FilterBattleDto) {
+  async getBattlesPerEvent(profile: Profile, filters: FilterBattleDto) {
     let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('event', 'event', 'event.id = battle.eventId')
@@ -365,7 +367,7 @@ export class DashboardsService {
     }));
   }
 
-  async getTrophyChangeInDateRange(profile, filters: FilterBattleDto) {
+  async getTrophyChangeInDateRange(profile: Profile, filters: FilterBattleDto) {
     let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .select([
@@ -386,7 +388,7 @@ export class DashboardsService {
     }));
   }
 
-  async getTrophyChangePerMode(profile, filters: FilterBattleDto) {
+  async getTrophyChangePerMode(profile: Profile, filters: FilterBattleDto) {
     let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('event', 'event', 'event.id = battle.eventId')
@@ -463,8 +465,9 @@ export class DashboardsService {
    * Brawler stats
    *
    * @param profile
+   * @param filters
    */
-  async brawlersStats(profile, filters: FilterBattleDto) {
+  async brawlersStats(profile: Profile, filters: FilterBattleDto) {
     const battlesPerBrawler = await this.getBattlesPerBrawler(profile, filters);
     const trophyChangePerBrawler = await this.getAverageTrophyChangePerBrawler(
       profile,
@@ -477,7 +480,7 @@ export class DashboardsService {
     };
   }
 
-  async getBattlesPerBrawler(profile, filters: FilterBattleDto) {
+  async getBattlesPerBrawler(profile: Profile, filters: FilterBattleDto) {
     let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('player', 'player', 'player.battleId = battle.id')
@@ -499,7 +502,7 @@ export class DashboardsService {
     }));
   }
 
-  async getAverageTrophyChangePerBrawler(profile, filters: FilterBattleDto) {
+  async getAverageTrophyChangePerBrawler(profile: Profile, filters: FilterBattleDto) {
     let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('player', 'player', 'player.battleId = battle.id')

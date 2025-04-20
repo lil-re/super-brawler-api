@@ -41,13 +41,13 @@ export class ProfilesController {
     const profile = await this.profilesService.findOneByTag(tag);
 
     if (profile?.id) {
-      return profile
+      return profile;
     } else {
       // TODO => fetch username from Brawl Stars API
       return await this.profilesService.create({
-        tag,
-        username: ''
-      })
+        tag: tag.includes('#') ? tag : `#${tag}`,
+        username: '',
+      });
     }
   }
 
