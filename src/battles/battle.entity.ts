@@ -4,7 +4,7 @@ import {
   Column,
   ManyToOne,
   OneToMany,
-  Index
+  Index,
 } from 'typeorm';
 import { Player } from '../players/player.entity';
 import { Event } from '../events/event.entity';

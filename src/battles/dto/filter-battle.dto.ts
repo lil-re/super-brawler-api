@@ -1,3 +1,3 @@
 export class FilterBattleDto {
-  dateRange?: 'thisWeek' | 'thisMonth' | 'thisYear' | 'last10Years';
+  dateRange?: 'today' | 'thisWeek' | 'thisMonth' | 'thisYear' | 'allTime';
 }

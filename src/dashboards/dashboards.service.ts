@@ -9,7 +9,7 @@ import {
   SearchBattleDto,
   SearchEventMode,
   SearchEventType,
-  SearchMapType,
+  SearchMapType, SearchResult,
 } from '../battles/dto/search-battle.dto';
 import { Profile } from '../profiles/profile.entity';
 
@@ -30,48 +30,42 @@ export class DashboardsService {
    * @param filters
    */
   async profileStats(profile: Profile, filters: FilterStatDto) {
-    return this.statRepository
+    const query = this.statRepository
       .createQueryBuilder('stat')
-      .innerJoin(
-        (subQuery) => {
-          subQuery
-            .select('MAX(stat.createdAt)', 'max_createdAt')
-            .from(Stat, 'stat');
-
-          if (filters.dateRange === 'thisMonth') {
-            subQuery
-              .where('stat.createdAt >= CURDATE() - INTERVAL 30 DAY')
-              .groupBy('DAY(stat.createdAt)');
-          } else if (filters.dateRange === 'thisYear') {
-            subQuery
-              .where('stat.createdAt >= CURDATE() - INTERVAL 12 MONTH')
-              .groupBy('MONTH(stat.createdAt)');
-          } else if (filters.dateRange === 'last10Years') {
-            subQuery
-              .where('stat.createdAt >= CURDATE() - INTERVAL 10 YEAR')
-              .groupBy('YEAR(stat.createdAt)');
-          } else {
-            subQuery
-              .where('stat.createdAt >= CURDATE() - INTERVAL 7 DAY')
-              .groupBy('DAY(stat.createdAt)');
-          }
-          return subQuery.where('stat.profileId = :profileId', {
-            profileId: profile.id,
-          });
-        },
-        'latest_stats',
-        'stat.createdAt = latest_stats.max_createdAt',
-      )
-      .orderBy('stat.createdAt', 'ASC')
       .select([
-        'stat.trophies',
-        'stat.trioVictories',
-        'stat.duoVictories',
-        'stat.soloVictories',
-        'stat.createdAt',
+        'MAX(stat.trophies) AS totalTrophies',
+        'MAX(stat.trioVictories) AS totalTrioVictories',
+        'MAX(stat.duoVictories) AS totalDuoVictories',
+        'MAX(stat.soloVictories) AS totalSoloVictories',
       ])
-      .where('stat.profileId = :profileId', { profileId: profile.id })
-      .getMany();
+      .where('stat.profileId = :profileId', { profileId: profile.id });
+
+    if (!filters.dateRange || filters.dateRange === 'thisWeek') {
+      query
+        .addSelect('stat.createdAt as statDate')
+        .where('stat.createdAt >= CURDATE() - INTERVAL 7 DAY')
+        .orderBy('statDate')
+        .groupBy('statDate');
+    } else if (filters.dateRange === 'thisMonth') {
+      query
+        .addSelect('stat.createdAt as statDate')
+        .where('stat.createdAt >= CURDATE() - INTERVAL 30 DAY')
+        .orderBy('statDate')
+        .groupBy('statDate');
+    } else if (filters.dateRange === 'thisYear') {
+      query
+        .addSelect("DATE_FORMAT(stat.createdAt, '%Y-%m') AS statDate")
+        .where('stat.createdAt >= CURDATE() - INTERVAL 12 MONTH')
+        .orderBy('statDate')
+        .groupBy('statDate');
+    } else if (filters.dateRange === 'allTime') {
+      query
+        .addSelect('YEAR(stat.createdAt) AS statDate')
+        .orderBy('statDate')
+        .groupBy('statDate');
+    }
+
+    return query.getRawMany();
   }
 
   /**
@@ -99,6 +93,7 @@ export class DashboardsService {
       eventMode,
       mapType,
       brawlerName,
+      result,
     } = filters;
 
     let query = this.battleRepository
@@ -119,6 +114,9 @@ export class DashboardsService {
     // Filter by brawler name
     query = this.searchByBrawler(query, brawlerName);
 
+    // Filter by battle result
+    query = this.searchByResult(query, result);
+
     // Filter by exact date
     query = this.searchByDate(query, date, dateRange);
 
@@ -127,8 +125,15 @@ export class DashboardsService {
   }
 
   async getSearchResults(profile: Profile, filters: SearchBattleDto) {
-    const { date, dateRange, eventType, eventMode, mapType, brawlerName } =
-      filters;
+    const {
+      date,
+      dateRange,
+      eventType,
+      eventMode,
+      mapType,
+      brawlerName,
+      result,
+    } = filters;
 
     // Base query
     let query = this.battleRepository
@@ -149,6 +154,9 @@ export class DashboardsService {
 
     // Filter by brawler name
     query = this.searchByBrawler(query, brawlerName);
+
+    // Filter by battle result
+    query = this.searchByResult(query, result);
 
     // Filter by exact date
     query = this.searchByDate(query, date, dateRange);
@@ -174,6 +182,7 @@ export class DashboardsService {
       eventMode,
       mapType,
       brawlerName,
+      result,
     } = filters;
 
     return query
@@ -200,6 +209,9 @@ export class DashboardsService {
 
           // Filter by brawler name
           subQuery = this.searchByBrawler(subQuery, brawlerName);
+
+          // Filter by battle result
+          subQuery = this.searchByResult(subQuery, result);
 
           // Filter by exact date
           subQuery = this.searchByDate(subQuery, date, dateRange);
@@ -251,6 +263,16 @@ export class DashboardsService {
       query = query.andWhere('player.brawlerName = :brawlerName', {
         brawlerName,
       });
+    }
+    return query;
+  }
+
+  searchByResult(
+    query: SelectQueryBuilder<Battle>,
+    result: SearchResult,
+  ): SelectQueryBuilder<Battle> {
+    if (result && result !== 'all') {
+      query.andWhere('battle.result = :result', { result });
     }
     return query;
   }
@@ -416,14 +438,14 @@ export class DashboardsService {
     battleQuery: SelectQueryBuilder<Battle>,
     filters: FilterBattleDto,
   ): SelectQueryBuilder<Battle> {
-    if (filters.dateRange === 'thisMonth') {
+    if (filters.dateRange === 'thisWeek') {
+      battleQuery.andWhere('battle.battleTime >= CURDATE() - INTERVAL 1 WEEK');
+    } else if (filters.dateRange === 'thisMonth') {
       battleQuery.andWhere('battle.battleTime >= CURDATE() - INTERVAL 1 MONTH');
     } else if (filters.dateRange === 'thisYear') {
       battleQuery.andWhere('battle.battleTime >= CURDATE() - INTERVAL 1 YEAR');
-    } else if (filters.dateRange === 'last10Years') {
-      battleQuery.andWhere('battle.battleTime >= CURDATE() - INTERVAL 10 YEAR');
-    } else {
-      battleQuery.andWhere('battle.battleTime >= CURDATE() - INTERVAL 1 WEEK');
+    } else if (filters.dateRange === 'allTime') {
+      return battleQuery;
     }
     return battleQuery;
   }
@@ -433,7 +455,11 @@ export class DashboardsService {
     filters: FilterBattleDto,
     includeResults: boolean = false,
   ): SelectQueryBuilder<Battle> {
-    if (filters.dateRange === 'thisMonth') {
+    if (filters.dateRange === 'thisWeek') {
+      battleQuery
+        .addSelect('DATE(battle.battleTime) AS battleDate')
+        .addGroupBy('battleDate');
+    } else if (filters.dateRange === 'thisMonth') {
       battleQuery
         .addSelect('DATE(battle.battleTime) AS battleDate')
         .addGroupBy('battleDate');
@@ -443,13 +469,9 @@ export class DashboardsService {
           "CONCAT(YEAR(battle.battleTime), '-', LPAD(MONTH(battle.battleTime), 2, '0')) AS battleDate",
         )
         .addGroupBy('battleDate');
-    } else if (filters.dateRange === 'last10Years') {
+    } else if (filters.dateRange === 'allTime') {
       battleQuery
         .addSelect('YEAR(battle.battleTime) AS battleDate')
-        .addGroupBy('battleDate');
-    } else {
-      battleQuery
-        .addSelect('DATE(battle.battleTime) AS battleDate')
         .addGroupBy('battleDate');
     }
 
