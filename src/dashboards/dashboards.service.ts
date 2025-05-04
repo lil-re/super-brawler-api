@@ -1,5 +1,10 @@
 import * as dayjs from 'dayjs';
-import { DataSource, ObjectLiteral, Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  DataSource,
+  ObjectLiteral,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
 import { Battle } from '../battles/battle.entity';
 import { Stat } from '../stats/stat.entity';
@@ -331,10 +336,6 @@ export class DashboardsService {
       profile,
       filters,
     );
-    // const winRateInDateRange = await this.getWinRateInDateRange(
-    //   profile,
-    //   filters,
-    // );
     const battlesPerMode = await this.getBattlesPerEvent(profile, filters);
     const trophyChangeInDateRange = await this.getTrophyChangeInDateRange(
       profile,
@@ -347,7 +348,6 @@ export class DashboardsService {
 
     return {
       battlesInDateRange,
-      // winRateInDateRange,
       battlesPerMode,
       trophyChangeInDateRange,
       trophyChangePerMode,
@@ -356,80 +356,28 @@ export class DashboardsService {
 
   async getBattlesInDateRange(profile: Profile, filters: FilterBattleDto) {
     let battleQuery = this.battleRepository
-      .createQueryBuilder('battle')
-      .select([
-        'count(battle.id) as numberOfBattles',
-        'battle.result as battleResult',
-      ])
-      .where('battle.profileId = :profileId', { profileId: profile.id })
-      .andWhere('battle.result is not null');
-
-    battleQuery = this.filterBattleByDateRange<Battle>(battleQuery, filters);
-    battleQuery = this.groupByBattleByDateRange<Battle>(
-      battleQuery,
-      filters,
-      true,
-    );
-
-    const results = await battleQuery.getRawMany();
-
-    return results.map((item) => ({
-      ...item,
-      numberOfBattles: Number(item.numberOfBattles),
-    }));
-  }
-
-  async getWinRateInDateRange(profile: Profile, filters: FilterBattleDto) {
-    let battleQuery = this.dataSource
       .createQueryBuilder()
-      .select('b2.battleDate', 'battleDate')
-      .addSelect(
-        'COALESCE(b3.numberOfVictories, 0) * 100.0 / b2.numberOfBattles',
+      .select(
+        `
+          ROUND(
+            SUM(CASE WHEN battle.result = :victory THEN 1 ELSE 0 END) 
+            / COUNT(*) * 100, 
+            2
+          )
+        `,
         'winRate',
       )
-      .from((subQuery) => {
-        return subQuery
-          .select('battle.profileId', 'profileId')
-          .addSelect('DATE(battle.battleTime)', 'battleDate')
-          .addSelect('COUNT(*)', 'numberOfBattles')
-          .from('battle', 'battle')
-          .where('battle.result IS NOT NULL')
-          .groupBy('battle.profileId')
-          .addGroupBy('DATE(battle.battleTime)');
-      }, 'b2')
-      .leftJoin(
-        (subQuery) => {
-          return subQuery
-            .select('battle.profileId', 'profileId')
-            .addSelect('DATE(battle.battleTime)', 'battleDate')
-            .addSelect('COUNT(*)', 'numberOfVictories')
-            .from('battle', 'battle')
-            .where("battle.result = 'victory'")
-            .groupBy('battle.profileId')
-            .addGroupBy('DATE(battle.battleTime)');
-        },
-        'b3',
-        'b2.profileId = b3.profileId AND b2.battleDate = b3.battleDate',
-      )
-      .where('b2.profileId = :profileId', { profileId: profile.id });
+      .setParameter('victory', 'victory')
+      .addSelect("SUM(result = 'victory') as victories")
+      .addSelect("SUM(result = 'defeat') as defeats")
+      .addSelect("SUM(result = 'draw') as draws")
+      .where('battle.result IS NOT NULL')
+      .andWhere('profileId = :profileId', { profileId: profile.id });
 
-    battleQuery = this.filterBattleByDateRange<ObjectLiteral>(
-      battleQuery,
-      filters,
-    );
-    battleQuery = this.groupByBattleByDateRange<ObjectLiteral>(
-      battleQuery,
-      filters,
-      true,
-    );
+    battleQuery = this.filterBattleByDateRange<Battle>(battleQuery, filters);
+    battleQuery = this.groupByBattleByDateRange<Battle>(battleQuery, filters);
 
-    // console.log(battleQuery.getSql());
-
-    const results = await battleQuery
-      // .addGroupBy('b2.profileId')
-      // .addGroupBy('b2.battleDate')
-      // .addGroupBy('b3.numberOfVictories')
-      .getRawMany();
+    const results = await battleQuery.getRawMany();
 
     return results.map((item) => ({
       ...item,
@@ -439,16 +387,27 @@ export class DashboardsService {
 
   async getBattlesPerEvent(profile: Profile, filters: FilterBattleDto) {
     let battleQuery = this.battleRepository
-      .createQueryBuilder('battle')
+      .createQueryBuilder()
       .innerJoin('event', 'event', 'event.id = battle.eventId')
-      .select([
-        'count(battle.id) as numberOfBattles',
-        'event.mode as mode',
-        'battle.result as battleResult',
-      ])
-      .where('battle.profileId = :profileId', { profileId: profile.id })
+      .select(
+        `
+          ROUND(
+            SUM(CASE WHEN battle.result = :victory THEN 1 ELSE 0 END) 
+            / COUNT(*) * 100, 
+            2
+          )
+        `,
+        'winRate',
+      )
+      .setParameter('victory', 'victory')
+      .addSelect("SUM(result = 'victory') as victories")
+      .addSelect("SUM(result = 'defeat') as defeats")
+      .addSelect("SUM(result = 'draw') as draws")
+      .addSelect('event.mode as mode')
+      .where('battle.result IS NOT NULL')
+      .andWhere('profileId = :profileId', { profileId: profile.id })
       .orderBy('event.mode', 'ASC')
-      .groupBy('event.mode, battleResult');
+      .groupBy('event.mode');
 
     battleQuery = this.filterBattleByDateRange<Battle>(battleQuery, filters);
 
@@ -456,7 +415,7 @@ export class DashboardsService {
 
     return results.map((item) => ({
       ...item,
-      numberOfBattles: Number(item.numberOfBattles),
+      winRate: Number(item.winRate),
     }));
   }
 
