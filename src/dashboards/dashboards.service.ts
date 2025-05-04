@@ -356,11 +356,11 @@ export class DashboardsService {
 
   async getBattlesInDateRange(profile: Profile, filters: FilterBattleDto) {
     let battleQuery = this.battleRepository
-      .createQueryBuilder()
+      .createQueryBuilder('battle')
       .select(
         `
           ROUND(
-            SUM(CASE WHEN result = :victory THEN 1 ELSE 0 END) 
+            SUM(CASE WHEN battle.result = :victory THEN 1 ELSE 0 END) 
             / COUNT(*) * 100, 
             2
           )
@@ -371,7 +371,7 @@ export class DashboardsService {
       .addSelect("SUM(result = 'victory') as victories")
       .addSelect("SUM(result = 'defeat') as defeats")
       .addSelect("SUM(result = 'draw') as draws")
-      .where('result IS NOT NULL')
+      .where('battle.result IS NOT NULL')
       .andWhere('profileId = :profileId', { profileId: profile.id });
 
     battleQuery = this.filterBattleByDateRange<Battle>(battleQuery, filters);
@@ -387,12 +387,12 @@ export class DashboardsService {
 
   async getBattlesPerEvent(profile: Profile, filters: FilterBattleDto) {
     let battleQuery = this.battleRepository
-      .createQueryBuilder()
+      .createQueryBuilder('battle')
       .innerJoin('event', 'event', 'event.id = battle.eventId')
       .select(
         `
           ROUND(
-            SUM(CASE WHEN result = :victory THEN 1 ELSE 0 END) 
+            SUM(CASE WHEN battle.result = :victory THEN 1 ELSE 0 END) 
             / COUNT(*) * 100, 
             2
           )
@@ -404,7 +404,7 @@ export class DashboardsService {
       .addSelect("SUM(result = 'defeat') as defeats")
       .addSelect("SUM(result = 'draw') as draws")
       .addSelect('event.mode as mode')
-      .where('result IS NOT NULL')
+      .where('battle.result IS NOT NULL')
       .andWhere('profileId = :profileId', { profileId: profile.id })
       .orderBy('event.mode', 'ASC')
       .groupBy('event.mode');
