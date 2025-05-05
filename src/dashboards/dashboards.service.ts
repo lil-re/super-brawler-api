@@ -521,7 +521,7 @@ export class DashboardsService {
    */
   async brawlersStats(profile: Profile, filters: FilterBattleDto) {
     const battlesPerBrawler = await this.getBattlesPerBrawler(profile, filters);
-    const trophyChangePerBrawler = await this.getAverageTrophyChangePerBrawler(
+    const trophyChangePerBrawler = await this.getTrophyChangePerBrawler(
       profile,
       filters,
     );
@@ -536,14 +536,25 @@ export class DashboardsService {
     let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('player', 'player', 'player.battleId = battle.id')
-      .select([
-        'count(battle.id) as numberOfBattles',
-        'player.brawlerName as brawlerName',
-        'battle.result as battleResult',
-      ])
-      .where('battle.profileId = :profileId', { profileId: profile.id })
+      .select(
+        `
+          ROUND(
+            SUM(CASE WHEN battle.result = :victory THEN 1 ELSE 0 END) 
+            / COUNT(*) * 100, 
+            2
+          )
+        `,
+        'winRate',
+      )
+      .setParameter('victory', 'victory')
+      .addSelect("SUM(result = 'victory') as victories")
+      .addSelect("SUM(result = 'defeat') as defeats")
+      .addSelect("SUM(result = 'draw') as draws")
+      .addSelect('player.brawlerName as brawlerName')
+      .where('battle.result IS NOT NULL')
+      .andWhere('profileId = :profileId', { profileId: profile.id })
       .andWhere('player.tag = :profileTag', { profileTag: profile.tag })
-      .groupBy('player.brawlerName, battleResult');
+      .groupBy('player.brawlerName');
 
     battleQuery = this.filterBattleByDateRange<Battle>(battleQuery, filters);
 
@@ -554,7 +565,7 @@ export class DashboardsService {
     }));
   }
 
-  async getAverageTrophyChangePerBrawler(
+  async getTrophyChangePerBrawler(
     profile: Profile,
     filters: FilterBattleDto,
   ) {

@@ -14,7 +14,7 @@ export class CronService {
 
   @Cron('0 */15 * * * *')
   async profilesCron() {
-    const profiles = await this.profilesService.findAll();
+    const profiles = await this.profilesService.findAllActive();
 
     for (const profile of profiles) {
       await this.cronQueue.add('add-stats', {

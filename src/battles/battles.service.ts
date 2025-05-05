@@ -118,11 +118,6 @@ export class BattlesService {
       const createBattleTeamDto = createBattleDto.battle.teams[i];
 
       for (const createBattlePlayerDto of createBattleTeamDto) {
-        console.log(
-          createBattlePlayerDto.tag,
-          createBattleDto.profileTag,
-          createBattlePlayerDto.tag === createBattleDto.profileTag,
-        );
         if (createBattlePlayerDto.tag === createBattleDto.profileTag) {
           await this.playersService.create({
             tag: createBattlePlayerDto.tag,

@@ -5,7 +5,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { SearchProfileDto } from './dto/search-profile.dto';
-import { Profile } from './profile.entity';
+import { Profile, ProfileStatus } from './profile.entity';
 
 @Injectable()
 export class ProfilesService {
@@ -30,6 +30,14 @@ export class ProfilesService {
 
   findAll() {
     return this.profileRepository.find();
+  }
+
+  findAllActive() {
+    return this.profileRepository.find({
+      where: {
+        status: ProfileStatus.ACTIVE,
+      },
+    });
   }
 
   async findOne(id: string) {
