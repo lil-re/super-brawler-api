@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { BrawlStarsService } from './brawlStars.service';
+import { BrawlStarsService } from './brawl-stars.service';
 import { BattlesModule } from '../battles/battles.module';
 import { StatsModule } from '../stats/stats.module';
 import { ProfilesModule } from '../profiles/profiles.module';

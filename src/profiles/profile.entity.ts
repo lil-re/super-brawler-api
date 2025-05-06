@@ -1,6 +1,7 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Battle } from '../battles/battle.entity';
 import { Stat } from '../stats/stat.entity';
+import { ProfileBrawler } from '../profile-brawlers/profile-brawler.entity';
 
 export enum ProfileStatus {
   ACTIVE = 'active',
@@ -33,4 +34,7 @@ export class Profile {
 
   @OneToMany(() => Stat, (stat) => stat.profile)
   stats: Stat[];
+
+  @OneToMany(() => ProfileBrawler, (profileBrawler) => profileBrawler.profile)
+  profileBrawlers: ProfileBrawler[];
 }

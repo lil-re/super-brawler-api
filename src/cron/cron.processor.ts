@@ -1,5 +1,5 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { BrawlStarsService } from '../brawlstars/brawlStars.service';
+import { BrawlStarsService } from '../brawl-stars/brawl-stars.service';
 import { Job } from 'bullmq';
 
 @Processor('cron')

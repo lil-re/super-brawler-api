@@ -11,7 +11,7 @@ import { ConfigModule } from '@nestjs/config';
 import { StatsModule } from './stats/stats.module';
 import { PlayersModule } from './players/players.module';
 import { EventsModule } from './events/events.module';
-import { BrawlStarsModule } from './brawlstars/brawlStars.module';
+import { BrawlStarsModule } from './brawl-stars/brawl-stars.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CronModule } from './cron/cron.module';
 import { BullModule } from '@nestjs/bullmq';
