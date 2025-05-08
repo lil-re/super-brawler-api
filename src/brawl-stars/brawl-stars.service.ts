@@ -29,7 +29,7 @@ export class BrawlStarsService {
     if (profile.id) {
       const data = await this.handleProfileQuery(profile);
       await this.handleProfileStatsData(profile, data);
-      await this.handleProfileBrawlersData(profile, data.brawlers);
+      // await this.handleProfileBrawlersData(profile, data.brawlers);
     }
   }
 
