@@ -7,9 +7,6 @@ export class StarPower {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
-  starPowerId: number;
-
   @Column()
   label: string;
 

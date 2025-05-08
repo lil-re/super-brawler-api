@@ -1,6 +1,6 @@
-import { CreateStarPowerDto } from '../../star-powers/dto/create-star-power.dto';
 import { CreateGadgetDto } from '../../gadgets/dto/create-gadget.dto';
 import { CreateGearDto } from '../../gears/dto/create-gear.dto';
+import { CreateStarPowerDto } from '../../star-powers/dto/create-star-power.dto';
 
 export class CreateProfileBrawlerDto {
   readonly id: number;

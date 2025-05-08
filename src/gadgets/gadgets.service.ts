@@ -13,7 +13,7 @@ export class GadgetsService {
 
   async create(createGadgetDto: CreateGadgetDto, brawler: Brawler) {
     const newGadget = this.gadgetRepository.create({
-      gadgetId: createGadgetDto.id,
+      id: createGadgetDto.id,
       label: createGadgetDto.name,
       brawler,
     });

@@ -13,7 +13,7 @@ export class StarPowersService {
 
   async create(createStarPowerDto: CreateStarPowerDto, brawler: Brawler) {
     const newStarPower = this.starPowerRepository.create({
-      starPowerId: createStarPowerDto.id,
+      id: createStarPowerDto.id,
       label: createStarPowerDto.name,
       brawler,
     });

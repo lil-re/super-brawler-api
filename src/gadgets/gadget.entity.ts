@@ -13,9 +13,6 @@ export class Gadget {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
-  gadgetId: number;
-
   @Column()
   label: string;
 

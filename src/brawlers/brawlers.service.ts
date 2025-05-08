@@ -20,10 +20,9 @@ export class BrawlersService {
 
   async create(createBrawlerDto: CreateBrawlerDto): Promise<Brawler> {
     const newBrawler = this.brawlerRepository.create({
-      brawlerId: createBrawlerDto.id,
+      id: createBrawlerDto.id,
       label: createBrawlerDto.name,
     });
-
 
     if (!newBrawler) {
       throw new Error(`Brawler could not be created`);

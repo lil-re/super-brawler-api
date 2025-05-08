@@ -9,6 +9,7 @@ import { CreateStatDto } from '../stats/dto/create-stat.dto';
 import { CreateProfileBrawlerDto } from '../profile-brawlers/dto/create-profile-brawler.dto';
 import { CreateBrawlerDto } from '../brawlers/dto/create-brawler.dto';
 import { BrawlersService } from '../brawlers/brawlers.service';
+import { ProfileBrawlersService } from '../profile-brawlers/profile-brawlers.service';
 
 @Injectable()
 export class BrawlStarsService {
@@ -16,6 +17,8 @@ export class BrawlStarsService {
 
   constructor(
     private statsService: StatsService,
+
+    private profileBrawlerService: ProfileBrawlersService,
 
     private battlesService: BattlesService,
 
@@ -26,7 +29,7 @@ export class BrawlStarsService {
     if (profile.id) {
       const data = await this.handleProfileQuery(profile);
       await this.handleProfileStatsData(profile, data);
-      await this.handleProfileStatsData(profile, data);
+      await this.handleProfileBrawlersData(profile, data.brawlers);
     }
   }
 
@@ -63,8 +66,22 @@ export class BrawlStarsService {
     }
   }
 
-  private async handleProfileBrawlersData(profile: Profile, data: Array<CreateProfileBrawlerDto>) {
-    // TODO
+  private async handleProfileBrawlersData(
+    profile: Profile,
+    data: Array<CreateProfileBrawlerDto>,
+  ) {
+    if (data) {
+      try {
+        for (const createProfileBrawlerDto of data) {
+          await this.profileBrawlerService.create(
+            createProfileBrawlerDto,
+            profile,
+          );
+        }
+      } catch (e) {
+        this.logger.debug(e.message);
+      }
+    }
   }
 
   async getProfileBattles(profile: Profile) {

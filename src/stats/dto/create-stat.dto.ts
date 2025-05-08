@@ -1,3 +1,5 @@
+import { CreateProfileBrawlerDto } from '../../profile-brawlers/dto/create-profile-brawler.dto';
+
 export class CreateStatDto {
   readonly profileId: string;
   readonly tag: string;
@@ -10,4 +12,5 @@ export class CreateStatDto {
   readonly soloVictories: number;
   readonly bestRoboRumbleTime: number;
   readonly bestTimeAsBigBrawler: number;
+  readonly brawlers: Array<CreateProfileBrawlerDto>;
 }

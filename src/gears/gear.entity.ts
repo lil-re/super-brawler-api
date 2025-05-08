@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { ProfileBrawler } from '../profile-brawlers/profile-brawler.entity';
 
 @Entity()
 export class Gear {
@@ -7,4 +8,7 @@ export class Gear {
 
   @Column()
   label: string;
+
+  @ManyToOne(() => ProfileBrawler, (profileBrawler) => profileBrawler.gadgets)
+  profileBrawler: ProfileBrawler;
 }
