@@ -14,11 +14,11 @@ export class CronProcessor extends WorkerHost {
 
     switch (job.name) {
       case 'add-stats': {
-        await this.brawlStarsService.handleProfileStats(profile);
+        await this.brawlStarsService.getProfileStats(profile);
         break;
       }
       case 'add-battles': {
-        await this.brawlStarsService.handleProfileBattles(profile);
+        await this.brawlStarsService.getProfileBattles(profile);
         break;
       }
     }

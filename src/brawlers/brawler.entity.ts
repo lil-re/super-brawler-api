@@ -8,6 +8,9 @@ export class Brawler {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ unique: true })
+  brawlerId: number;
+
   @Column()
   label: string;
 

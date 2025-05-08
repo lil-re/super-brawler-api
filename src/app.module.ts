@@ -15,6 +15,7 @@ import { BrawlStarsModule } from './brawl-stars/brawl-stars.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CronModule } from './cron/cron.module';
 import { BullModule } from '@nestjs/bullmq';
+import { BrawlersModule } from './brawlers/brawlers.module';
 
 @Module({
   controllers: [AppController],
@@ -25,6 +26,7 @@ import { BullModule } from '@nestjs/bullmq';
     ProfilesModule,
     StatsModule,
     BattlesModule,
+    BrawlersModule,
     EventsModule,
     PlayersModule,
     DashboardsModule,

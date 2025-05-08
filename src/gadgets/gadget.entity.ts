@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  ManyToMany,
+} from 'typeorm';
 import { Brawler } from '../brawlers/brawler.entity';
 import { ProfileBrawler } from '../profile-brawlers/profile-brawler.entity';
 
@@ -6,6 +12,9 @@ import { ProfileBrawler } from '../profile-brawlers/profile-brawler.entity';
 export class Gadget {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ unique: true })
+  gadgetId: number;
 
   @Column()
   label: string;
