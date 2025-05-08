@@ -12,7 +12,7 @@ export class CronService {
     @InjectQueue('cron') private cronQueue: Queue,
   ) {}
 
-  @Cron('0 */1 * * * *')
+  @Cron('0 */15 * * * *')
   async profilesCron() {
     const profiles = await this.profilesService.findAllActive();
 
