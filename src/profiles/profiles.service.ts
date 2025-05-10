@@ -165,12 +165,12 @@ export class ProfilesService {
     return query.innerJoin(
       (subQuery: SelectQueryBuilder<Profile>) => {
         subQuery
-          .select('profile_page.id as joinedId')
-          .from(Profile, 'profile_page')
-          .addSelect('profile_page.tag')
-          .addSelect('profile_page.username')
-          .addSelect('profile_page.status')
-          .addSelect('profile_page.createdAt');
+          .select('profilePage.id as joinedId')
+          .from(Profile, 'profilePage')
+          .addSelect('profilePage.tag')
+          .addSelect('profilePage.username')
+          .addSelect('profilePage.status')
+          .addSelect('profilePage.createdAt');
 
         // Search by tag
         subQuery = this.searchByEmail(subQuery, search);
@@ -183,7 +183,7 @@ export class ProfilesService {
           subQuery,
           orderByValue,
           orderByDirection,
-          'profile_page',
+          'profilePage',
         );
 
         return subQuery.limit(pageSize).offset((page - 1) * pageSize);

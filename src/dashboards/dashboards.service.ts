@@ -18,6 +18,9 @@ import {
   SearchResult,
 } from '../battles/dto/search-battle.dto';
 import { Profile } from '../profiles/profile.entity';
+import { SearchProfileBrawlerDto } from '../profile-brawlers/dto/search-profile-brawler.dto';
+import { ProfileBrawler } from '../profile-brawlers/profile-brawler.entity';
+import { User } from '../users/user.entity';
 
 @Injectable()
 export class DashboardsService {
@@ -30,6 +33,9 @@ export class DashboardsService {
 
     @Inject('BATTLE_REPOSITORY')
     private battleRepository: Repository<Battle>,
+
+    @Inject('PROFILE_BRAWLER_REPOSITORY')
+    private profileBrawlerRepository: Repository<ProfileBrawler>,
   ) {}
 
   /**
@@ -83,9 +89,9 @@ export class DashboardsService {
    * @param profile
    * @param filters
    */
-  async battleHistory(profile: Profile, filters: SearchBattleDto) {
-    const items = await this.getSearchResults(profile, filters);
-    const pages = await this.getSearchCount(profile, filters);
+  async battleLog(profile: Profile, filters: SearchBattleDto) {
+    const items = await this.getBattleLogResults(profile, filters);
+    const pages = await this.getBattleLogCount(profile, filters);
 
     return {
       items,
@@ -93,7 +99,7 @@ export class DashboardsService {
     };
   }
 
-  async getSearchCount(profile: Profile, filters: SearchBattleDto) {
+  async getBattleLogCount(profile: Profile, filters: SearchBattleDto) {
     const {
       pageSize,
       date,
@@ -115,25 +121,25 @@ export class DashboardsService {
       .andWhere('battle.profileId = :profileId', { profileId: profile.id });
 
     // Filter by event mode (team vs team or showdown)
-    query = this.searchByEventType(query, eventType, eventMode);
+    query = this.filterBattleLogByEventType(query, eventType, eventMode);
 
     // Filter by map type (community maps or official map)
-    query = this.searchByMapType(query, mapType);
+    query = this.filterBattleLogByMapType(query, mapType);
 
     // Filter by brawler name
-    query = this.searchByBrawler(query, brawlerName);
+    query = this.filterBattleLogByBrawler(query, brawlerName);
 
     // Filter by battle result
-    query = this.searchByResult(query, result);
+    query = this.filterBattleLogByResult(query, result);
 
     // Filter by exact date
-    query = this.searchByDate(query, date, dateRange);
+    query = this.filterBattleLogByDate(query, date, dateRange);
 
     // Execute the query and return results
     return await query.getRawOne();
   }
 
-  async getSearchResults(profile: Profile, filters: SearchBattleDto) {
+  async getBattleLogResults(profile: Profile, filters: SearchBattleDto) {
     const {
       date,
       dateRange,
@@ -156,28 +162,28 @@ export class DashboardsService {
       .andWhere('battle.profileId = :profileId', { profileId: profile.id });
 
     // Filter by event mode (team vs team or showdown)
-    query = this.searchByEventType(query, eventType, eventMode);
+    query = this.filterBattleLogByEventType(query, eventType, eventMode);
 
     // Filter by map type (community maps or official map)
-    query = this.searchByMapType(query, mapType);
+    query = this.filterBattleLogByMapType(query, mapType);
 
     // Filter by brawler name
-    query = this.searchByBrawler(query, brawlerName);
+    query = this.filterBattleLogByBrawler(query, brawlerName);
 
     // Filter by battle result
-    query = this.searchByResult(query, result);
+    query = this.filterBattleLogByResult(query, result);
 
     // Filter by exact date
-    query = this.searchByDate(query, date, dateRange);
+    query = this.filterBattleLogByDate(query, date, dateRange);
 
     // Pagination
-    query = this.paginateSearch(query, profile, filters);
+    query = this.paginateBattleLog(query, profile, filters);
 
     // Execute the query and return results
     return await query.getMany();
   }
 
-  paginateSearch(
+  paginateBattleLog(
     query: SelectQueryBuilder<Battle>,
     profile: Profile,
     filters: SearchBattleDto,
@@ -211,19 +217,23 @@ export class DashboardsService {
             .orderBy('battle.battleTime', 'DESC');
 
           // Filter by event type (team vs team or showdown)
-          subQuery = this.searchByEventType(subQuery, eventType, eventMode);
+          subQuery = this.filterBattleLogByEventType(
+            subQuery,
+            eventType,
+            eventMode,
+          );
 
           // Filter by map type (community maps or original map)
-          subQuery = this.searchByMapType(subQuery, mapType);
+          subQuery = this.filterBattleLogByMapType(subQuery, mapType);
 
           // Filter by brawler name
-          subQuery = this.searchByBrawler(subQuery, brawlerName);
+          subQuery = this.filterBattleLogByBrawler(subQuery, brawlerName);
 
           // Filter by battle result
-          subQuery = this.searchByResult(subQuery, result);
+          subQuery = this.filterBattleLogByResult(subQuery, result);
 
           // Filter by exact date
-          subQuery = this.searchByDate(subQuery, date, dateRange);
+          subQuery = this.filterBattleLogByDate(subQuery, date, dateRange);
 
           return subQuery.limit(pageSize).offset((page - 1) * pageSize);
         },
@@ -233,7 +243,7 @@ export class DashboardsService {
       .orderBy('battle.battleTime', 'DESC');
   }
 
-  searchByEventType(
+  filterBattleLogByEventType(
     query: SelectQueryBuilder<Battle>,
     eventType: SearchEventType,
     eventMode: SearchEventMode,
@@ -252,7 +262,7 @@ export class DashboardsService {
     return query;
   }
 
-  searchByMapType(
+  filterBattleLogByMapType(
     query: SelectQueryBuilder<Battle>,
     mapType: SearchMapType,
   ): SelectQueryBuilder<Battle> {
@@ -264,7 +274,7 @@ export class DashboardsService {
     return query;
   }
 
-  searchByBrawler(
+  filterBattleLogByBrawler(
     query: SelectQueryBuilder<Battle>,
     brawlerName: string,
   ): SelectQueryBuilder<Battle> {
@@ -276,7 +286,7 @@ export class DashboardsService {
     return query;
   }
 
-  searchByResult(
+  filterBattleLogByResult(
     query: SelectQueryBuilder<Battle>,
     result: SearchResult,
   ): SelectQueryBuilder<Battle> {
@@ -286,7 +296,7 @@ export class DashboardsService {
     return query;
   }
 
-  searchByDate(
+  filterBattleLogByDate(
     query: SelectQueryBuilder<Battle>,
     date: string,
     dateRange: string,
@@ -514,6 +524,138 @@ export class DashboardsService {
   }
 
   /**
+   * Brawlers list
+   *
+   * @param profile
+   * @param filters
+   */
+  async brawlersList(profile: Profile, filters: SearchProfileBrawlerDto) {
+    const items = await this.getBrawlersListResults(profile, filters);
+    const pages = await this.getBrawlersListCount(profile, filters);
+
+    return {
+      items,
+      pages: Number(pages.pageCount),
+    };
+  }
+
+  async getBrawlersListCount(
+    profile: Profile,
+    filters: SearchProfileBrawlerDto,
+  ) {
+    const { pageSize, search } = filters;
+
+    let query = this.profileBrawlerRepository
+      .createQueryBuilder('profileBrawler')
+      .innerJoin('profileBrawler.brawler', 'brawler')
+      .innerJoin('profileBrawler.profile', 'profile')
+      .select('CEIL(COUNT(profileBrawler.id) / :pageSize)', 'pageCount')
+      .setParameter('pageSize', pageSize)
+      .andWhere('profile.tag = :playerTag', { playerTag: profile.tag });
+
+    // Search brawlers
+    query = this.searchBrawlersList(query, search);
+
+    // Pagination
+    query = this.paginateBrawlersList(query, profile, filters);
+
+    // Execute the query and return results
+    return await query.getRawOne();
+  }
+
+  async getBrawlersListResults(
+    profile: Profile,
+    filters: SearchProfileBrawlerDto,
+  ) {
+    const { search, orderByValue, orderByDirection } = filters;
+
+    // Base query
+    let query = this.profileBrawlerRepository
+      .createQueryBuilder('profileBrawler')
+      .innerJoin('profileBrawler.brawler', 'brawler')
+      .innerJoin('profileBrawler.profile', 'profile')
+      .addSelect('brawler.label')
+      .andWhere('profile.tag = :playerTag', { playerTag: profile.tag });
+
+    // Search brawlers
+    query = this.searchBrawlersList(query, search);
+
+    // Pagination
+    query = this.paginateBrawlersList(query, profile, filters);
+
+    // Order brawlers list
+    query = this.orderBrawlersListByValue(query, orderByValue, orderByDirection);
+
+    // Execute the query and return results
+    return await query.getMany();
+  }
+
+  paginateBrawlersList(
+    query: SelectQueryBuilder<ProfileBrawler>,
+    profile: Profile,
+    filters: SearchProfileBrawlerDto,
+  ): SelectQueryBuilder<ProfileBrawler> {
+    const { page, pageSize, search, orderByValue, orderByDirection } = filters;
+
+    return query.innerJoin(
+      (subQuery: SelectQueryBuilder<ProfileBrawler>) => {
+        subQuery
+          .select('profileBrawlerPage.id as joinedId')
+          .from(ProfileBrawler, 'profileBrawlerPage')
+          .innerJoin('profileBrawlerPage.brawler', 'brawler')
+          .innerJoin('profileBrawlerPage.profile', 'profile')
+          .andWhere('profile.tag = :playerTag', { playerTag: profile.tag });
+
+        // Search brawlers
+        subQuery = this.searchBrawlersList(subQuery, search);
+
+        // Order brawlers list
+        subQuery = this.orderBrawlersListByValue(
+          subQuery,
+          orderByValue,
+          orderByDirection,
+          'profileBrawlerPage',
+        );
+
+        return subQuery.limit(pageSize).offset((page - 1) * pageSize);
+      },
+      'profileBrawler2',
+      'profileBrawler.id = profileBrawler2.joinedId',
+    );
+  }
+
+  private searchBrawlersList(
+    query: SelectQueryBuilder<ProfileBrawler>,
+    search: string,
+  ): SelectQueryBuilder<ProfileBrawler> {
+    if (search && search.length > 0) {
+      query.andWhere('brawler.label LIKE :search', { search: `%${search}%` });
+    }
+
+    return query;
+  }
+
+  private orderBrawlersListByValue(
+    query: SelectQueryBuilder<ProfileBrawler>,
+    orderByValue: string,
+    orderByDirection: 'ASC' | 'DESC',
+    alias: string = 'profileBrawler',
+  ): SelectQueryBuilder<ProfileBrawler> {
+    console.log(orderByValue, orderByDirection);
+    if (orderByValue && orderByValue.length > 0 && orderByDirection) {
+      if (orderByValue === 'label') {
+        query.orderBy('brawler.label', orderByDirection);
+      } else {
+        query.orderBy(`${alias}.${orderByValue}`, orderByDirection);
+      }
+    } else {
+      query.orderBy('trophies', 'DESC');
+    }
+
+    return query;
+  }
+
+  /**
    * Brawler stats
    *
    * @param profile
@@ -565,10 +707,7 @@ export class DashboardsService {
     }));
   }
 
-  async getTrophyChangePerBrawler(
-    profile: Profile,
-    filters: FilterBattleDto,
-  ) {
+  async getTrophyChangePerBrawler(profile: Profile, filters: FilterBattleDto) {
     let battleQuery = this.battleRepository
       .createQueryBuilder('battle')
       .innerJoin('player', 'player', 'player.battleId = battle.id')

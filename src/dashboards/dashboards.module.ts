@@ -6,6 +6,7 @@ import { BattlesModule } from '../battles/battles.module';
 import { StatsModule } from '../stats/stats.module';
 import { DashboardsService } from './dashboards.service';
 import { PlayersModule } from '../players/players.module';
+import { ProfileBrawlersModule } from '../profile-brawlers/profile-brawlers.module';
 
 @Module({
   imports: [
@@ -13,9 +14,10 @@ import { PlayersModule } from '../players/players.module';
     ProfilesModule,
     BattlesModule,
     PlayersModule,
+    ProfileBrawlersModule,
     StatsModule,
   ],
   controllers: [DashboardsController],
-  providers: [DashboardsService]
+  providers: [DashboardsService],
 })
 export class DashboardsModule {}

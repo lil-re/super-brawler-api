@@ -19,7 +19,7 @@ export class DashboardsController {
   ) {}
 
   @Post(':tag/profile-stats')
-  async stats(@Param('tag') tag: string, @Body() filterStatDto: FilterStatDto) {
+  async profileStats(@Param('tag') tag: string, @Body() filterStatDto: FilterStatDto) {
     const profile = await this.profilesService.findOneByTag(tag);
     const stats = await this.dashboardsService.profileStats(
       profile,
@@ -29,13 +29,13 @@ export class DashboardsController {
   }
 
   @Post(':tag/battles-history')
-  async search(
+  async battleLog(
     @Param('tag') tag: string,
     @Body() searchBattleDto: SearchBattleDto,
   ) {
     const profile = await this.profilesService.findOneByTag(tag);
     const brawlers = await this.dashboardsService.profileBrawlers(profile.id);
-    const history = await this.dashboardsService.battleHistory(
+    const history = await this.dashboardsService.battleLog(
       profile,
       searchBattleDto,
     );
@@ -43,7 +43,7 @@ export class DashboardsController {
   }
 
   @Post(':tag/battles-stats')
-  async battles(
+  async battlesStats(
     @Param('tag') tag: string,
     @Body() filterBattleDto: FilterBattleDto,
   ) {
@@ -55,8 +55,21 @@ export class DashboardsController {
     return { profile, stats };
   }
 
+  @Post(':tag/brawlers-list')
+  async brawlersList(
+    @Param('tag') tag: string,
+    @Body() searchBattleDto: SearchBattleDto,
+  ) {
+    const profile = await this.profilesService.findOneByTag(tag);
+    const brawlers = await this.dashboardsService.brawlersList(
+      profile,
+      searchBattleDto,
+    );
+    return { profile, brawlers };
+  }
+
   @Post(':tag/brawlers-stats')
-  async players(
+  async brawlersStats(
     @Param('tag') tag: string,
     @Body() filterBattleDto: FilterBattleDto,
   ) {

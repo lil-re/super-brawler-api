@@ -149,11 +149,11 @@ export class UsersService {
     return query.innerJoin(
       (subQuery: SelectQueryBuilder<User>) => {
         subQuery
-          .select('user_page.id as joinedId')
-          .from(User, 'user_page')
-          .addSelect('user_page.email')
-          .addSelect('user_page.role')
-          .addSelect('user_page.createdAt');
+          .select('userPage.id as joinedId')
+          .from(User, 'userPage')
+          .addSelect('userPage.email')
+          .addSelect('userPage.role')
+          .addSelect('userPage.createdAt');
 
         // Search by email
         subQuery = this.searchByEmail(subQuery, search);
@@ -166,7 +166,7 @@ export class UsersService {
           subQuery,
           orderByValue,
           orderByDirection,
-          'user_page',
+          'userPage',
         );
 
         return subQuery.limit(pageSize).offset((page - 1) * pageSize);
