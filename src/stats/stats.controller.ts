@@ -10,6 +10,6 @@ export class StatsController {
   @UseGuards(AuthGuard)
   @Post()
   create(@Body() creatStatDto: CreateStatDto) {
-    return this.statsService.create(creatStatDto);
+    return this.statsService.createOrUpdate(creatStatDto);
   }
 }

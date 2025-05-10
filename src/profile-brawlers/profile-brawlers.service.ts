@@ -2,9 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CreateProfileBrawlerDto } from './dto/create-profile-brawler.dto';
 import { Repository } from 'typeorm';
 import { ProfileBrawler } from './profile-brawler.entity';
-import { Brawler } from '../brawlers/brawler.entity';
-import { CreateBrawlerDto } from '../brawlers/dto/create-brawler.dto';
-import { CreateGearDto } from '../gears/dto/create-gear.dto';
 import { GearsService } from '../gears/gears.service';
 import { Profile } from '../profiles/profile.entity';
 
@@ -17,7 +14,10 @@ export class ProfileBrawlersService {
     private gearService: GearsService,
   ) {}
 
-  async create(createProfileBrawlerDto: CreateProfileBrawlerDto, profile: Profile) {
+  async createOrUpdate(
+    profile: Profile,
+    createProfileBrawlerDto: CreateProfileBrawlerDto,
+  ) {
     const currentProfileBrawler = await this.profileBrawlerRepository.findOneBy(
       {
         brawler: {
@@ -30,11 +30,19 @@ export class ProfileBrawlersService {
     );
 
     if (currentProfileBrawler) {
-      throw new Error(
-        `Brawler with ID "${currentProfileBrawler.id}" already linked to profile with tag "${profile.tag}"`,
+      await this.handleUpdatedBrawler(
+        currentProfileBrawler.id,
+        createProfileBrawlerDto,
       );
+    } else {
+      await this.handleNewProfileBrawler(profile, createProfileBrawlerDto);
     }
+  }
 
+  async handleNewProfileBrawler(
+    profile: Profile,
+    createProfileBrawlerDto: CreateProfileBrawlerDto,
+  ): Promise<ProfileBrawler> {
     const newProfileBrawler: ProfileBrawler =
       this.profileBrawlerRepository.create({
         power: createProfileBrawlerDto.power,
@@ -57,14 +65,34 @@ export class ProfileBrawlersService {
 
     const profileBrawler =
       await this.profileBrawlerRepository.save(newProfileBrawler);
-    this.handleGears(createProfileBrawlerDto, profileBrawler);
+    this.handleGears(profileBrawler, createProfileBrawlerDto);
 
     return profileBrawler;
   }
 
-  handleGears(
+  async handleUpdatedBrawler(
+    id: number,
     createProfileBrawlerDto: CreateProfileBrawlerDto,
+  ): Promise<ProfileBrawler> {
+    const profileBrawler = await this.profileBrawlerRepository.preload({
+      id,
+      power: createProfileBrawlerDto.power,
+      rank: createProfileBrawlerDto.rank,
+      trophies: createProfileBrawlerDto.trophies,
+      highestTrophies: createProfileBrawlerDto.highestTrophies,
+      gadgets: createProfileBrawlerDto.gadgets,
+      starPowers: createProfileBrawlerDto.starPowers
+    });
+
+    if (!profileBrawler) {
+      throw new Error(`Profile brawler with id ${id} not found`);
+    }
+    return this.profileBrawlerRepository.save(profileBrawler);
+  }
+
+  handleGears(
     profileBrawler: ProfileBrawler,
+    createProfileBrawlerDto: CreateProfileBrawlerDto,
   ) {
     createProfileBrawlerDto.gears.map((createGearDto) => {
       return this.gearService.create(createGearDto, profileBrawler);

@@ -13,7 +13,7 @@ export class StatsService {
     private profilesService: ProfilesService,
   ) {}
 
-  async create(createStatDto: CreateStatDto) {
+  async createOrUpdate(createStatDto: CreateStatDto) {
     // Handle Profile
     const profile = await this.profilesService.findOneByIdAndTag(
       createStatDto.profileId,
@@ -21,7 +21,7 @@ export class StatsService {
     );
 
     // Get Stat for the current day
-    const stat = await this.statRepository
+    const currentStat = await this.statRepository
       .createQueryBuilder('stat')
       .where('stat.profileId = :profileId', { profileId: profile.id })
       .andWhere('DATE(createdAt) = DATE(NOW())')
@@ -29,8 +29,8 @@ export class StatsService {
       .getOne();
 
     // Create or update Stat
-    if (stat?.id) {
-      return this.handleUpdatedStat(stat.id, createStatDto);
+    if (currentStat?.id) {
+      return this.handleUpdatedStat(currentStat.id, createStatDto);
     } else {
       return this.handleNewStat(profile.id, createStatDto);
     }

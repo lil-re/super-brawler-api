@@ -556,9 +556,6 @@ export class DashboardsService {
     // Search brawlers
     query = this.searchBrawlersList(query, search);
 
-    // Pagination
-    query = this.paginateBrawlersList(query, profile, filters);
-
     // Execute the query and return results
     return await query.getRawOne();
   }
