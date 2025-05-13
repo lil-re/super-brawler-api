@@ -1,27 +1,37 @@
-import {
-  Body,
-  Controller,
-  Param,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Param, Post } from '@nestjs/common';
 import { FilterStatDto } from '../stats/dto/filter-stat.dto';
 import { FilterBattleDto } from '../battles/dto/filter-battle.dto';
-import { DashboardsService } from './dashboards.service';
 import { SearchBattleDto } from '../battles/dto/search-battle.dto';
 import { ProfilesService } from '../profiles/profiles.service';
+import { BattleLogService } from './services/battle-log.service';
+import { ProfileStatsService } from './services/profile-stats.service';
+import { BattlesStatsService } from './services/battles-stats.service';
+import { BrawlersListService } from './services/brawlers-list.service';
+import { BrawlersStatsService } from './services/brawlers-stats.service';
 
 @Controller('dashboards')
 export class DashboardsController {
   constructor(
     private readonly profilesService: ProfilesService,
 
-    private readonly dashboardsService: DashboardsService,
+    private readonly profileStatsService: ProfileStatsService,
+
+    private readonly battleLogService: BattleLogService,
+
+    private readonly battlesStatsService: BattlesStatsService,
+
+    private readonly brawlersListService: BrawlersListService,
+
+    private readonly brawlersStatsService: BrawlersStatsService,
   ) {}
 
   @Post(':tag/profile-stats')
-  async profileStats(@Param('tag') tag: string, @Body() filterStatDto: FilterStatDto) {
+  async profileStats(
+    @Param('tag') tag: string,
+    @Body() filterStatDto: FilterStatDto,
+  ) {
     const profile = await this.profilesService.findOneByTag(tag);
-    const stats = await this.dashboardsService.profileStats(
+    const stats = await this.profileStatsService.profileStats(
       profile,
       filterStatDto,
     );
@@ -34,8 +44,8 @@ export class DashboardsController {
     @Body() searchBattleDto: SearchBattleDto,
   ) {
     const profile = await this.profilesService.findOneByTag(tag);
-    const brawlers = await this.dashboardsService.profileBrawlers(profile.id);
-    const history = await this.dashboardsService.battleLog(
+    const brawlers = await this.battleLogService.battleLogBrawlers(profile.id);
+    const history = await this.battleLogService.battleLog(
       profile,
       searchBattleDto,
     );
@@ -48,7 +58,7 @@ export class DashboardsController {
     @Body() filterBattleDto: FilterBattleDto,
   ) {
     const profile = await this.profilesService.findOneByTag(tag);
-    const stats = await this.dashboardsService.battlesStats(
+    const stats = await this.battlesStatsService.battlesStats(
       profile,
       filterBattleDto,
     );
@@ -61,7 +71,7 @@ export class DashboardsController {
     @Body() searchBattleDto: SearchBattleDto,
   ) {
     const profile = await this.profilesService.findOneByTag(tag);
-    const brawlers = await this.dashboardsService.brawlersList(
+    const brawlers = await this.brawlersListService.brawlersList(
       profile,
       searchBattleDto,
     );
@@ -74,7 +84,7 @@ export class DashboardsController {
     @Body() filterBattleDto: FilterBattleDto,
   ) {
     const profile = await this.profilesService.findOneByTag(tag);
-    const stats = await this.dashboardsService.brawlersStats(
+    const stats = await this.brawlersStatsService.brawlersStats(
       profile,
       filterBattleDto,
     );
