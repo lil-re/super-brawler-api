@@ -54,7 +54,7 @@ export class BrawlStarsService {
   private async handleProfileStatsData(profile: Profile, data: CreateStatDto) {
     if (data) {
       try {
-        await this.statsService.createOrUpdate({
+        await this.statsService.createOrUpdate(profile, {
           ...data,
           profileId: profile.id,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

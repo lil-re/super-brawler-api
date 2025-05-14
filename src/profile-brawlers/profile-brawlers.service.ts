@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { ProfileBrawler } from './profile-brawler.entity';
 import { GearsService } from '../gears/gears.service';
 import { Profile } from '../profiles/profile.entity';
+import { UpdateProfileBrawlerDto } from './dto/update-profile-brawler.dto';
+import { ProfileBrawlerStatsService } from '../profile-brawler-stats/profile-brawler-stats.service';
 
 @Injectable()
 export class ProfileBrawlersService {
@@ -11,17 +13,16 @@ export class ProfileBrawlersService {
     @Inject('PROFILE_BRAWLER_REPOSITORY')
     private profileBrawlerRepository: Repository<ProfileBrawler>,
 
+    private profileBrawlerStatService: ProfileBrawlerStatsService,
+
     private gearService: GearsService,
   ) {}
 
-  async createOrUpdate(
-    profile: Profile,
-    createProfileBrawlerDto: CreateProfileBrawlerDto,
-  ) {
+  async createOrUpdate(profile: Profile, data: CreateProfileBrawlerDto) {
     const currentProfileBrawler = await this.profileBrawlerRepository.findOneBy(
       {
         brawler: {
-          id: createProfileBrawlerDto.id,
+          id: data.id,
         },
         profile: {
           id: profile.id,
@@ -30,29 +31,22 @@ export class ProfileBrawlersService {
     );
 
     if (currentProfileBrawler) {
-      await this.handleUpdatedBrawler(
-        currentProfileBrawler.id,
-        createProfileBrawlerDto,
-      );
+      await this.handleUpdatedBrawler(currentProfileBrawler.id, data);
     } else {
-      await this.handleNewProfileBrawler(profile, createProfileBrawlerDto);
+      await this.handleNewProfileBrawler(profile, data);
     }
   }
 
   async handleNewProfileBrawler(
     profile: Profile,
-    createProfileBrawlerDto: CreateProfileBrawlerDto,
+    data: CreateProfileBrawlerDto,
   ): Promise<ProfileBrawler> {
     const newProfileBrawler: ProfileBrawler =
       this.profileBrawlerRepository.create({
-        power: createProfileBrawlerDto.power,
-        rank: createProfileBrawlerDto.rank,
-        trophies: createProfileBrawlerDto.trophies,
-        highestTrophies: createProfileBrawlerDto.highestTrophies,
-        gadgets: createProfileBrawlerDto.gadgets,
-        starPowers: createProfileBrawlerDto.starPowers,
+        gadgets: data.gadgets,
+        starPowers: data.starPowers,
         brawler: {
-          id: createProfileBrawlerDto.id,
+          id: data.id,
         },
         profile: {
           id: profile.id,
@@ -65,37 +59,51 @@ export class ProfileBrawlersService {
 
     const profileBrawler =
       await this.profileBrawlerRepository.save(newProfileBrawler);
-    this.handleGears(profileBrawler, createProfileBrawlerDto);
+    await this.handleProfileBrawlerStats(profileBrawler, data);
+    await this.handleGears(profileBrawler, data);
 
     return profileBrawler;
   }
 
   async handleUpdatedBrawler(
     id: number,
-    createProfileBrawlerDto: CreateProfileBrawlerDto,
+    data: UpdateProfileBrawlerDto,
   ): Promise<ProfileBrawler> {
-    const profileBrawler = await this.profileBrawlerRepository.preload({
+    const newProfileBrawler = await this.profileBrawlerRepository.preload({
       id,
-      power: createProfileBrawlerDto.power,
-      rank: createProfileBrawlerDto.rank,
-      trophies: createProfileBrawlerDto.trophies,
-      highestTrophies: createProfileBrawlerDto.highestTrophies,
-      gadgets: createProfileBrawlerDto.gadgets,
-      starPowers: createProfileBrawlerDto.starPowers
+      gadgets: data.gadgets,
+      starPowers: data.starPowers,
     });
 
-    if (!profileBrawler) {
+    if (!newProfileBrawler) {
       throw new Error(`Profile brawler with id ${id} not found`);
     }
-    return this.profileBrawlerRepository.save(profileBrawler);
+
+    const profileBrawler =
+      await this.profileBrawlerRepository.save(newProfileBrawler);
+    await this.handleProfileBrawlerStats(profileBrawler, data);
+
+    return profileBrawler;
   }
 
-  handleGears(
+  async handleGears(
     profileBrawler: ProfileBrawler,
-    createProfileBrawlerDto: CreateProfileBrawlerDto,
+    data: CreateProfileBrawlerDto,
   ) {
-    createProfileBrawlerDto.gears.map((createGearDto) => {
-      return this.gearService.create(createGearDto, profileBrawler);
+    for (const gear of data.gears) {
+      await this.gearService.create(profileBrawler, gear);
+    }
+  }
+
+  async handleProfileBrawlerStats(
+    profileBrawler: ProfileBrawler,
+    data: CreateProfileBrawlerDto | UpdateProfileBrawlerDto,
+  ) {
+    await this.profileBrawlerStatService.createOrUpdate(profileBrawler, {
+      rank: data.rank,
+      power: data.power,
+      trophies: data.trophies,
+      highestTrophies: data.highestTrophies,
     });
   }
 }

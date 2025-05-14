@@ -1,7 +1,4 @@
-import {
-  Repository,
-  SelectQueryBuilder,
-} from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
 import { Profile } from '../../profiles/profile.entity';
 import { SearchProfileBrawlerDto } from '../../profile-brawlers/dto/search-profile-brawler.dto';
@@ -40,6 +37,7 @@ export class BrawlersListService {
       .createQueryBuilder('profileBrawler')
       .innerJoin('profileBrawler.brawler', 'brawler')
       .innerJoin('profileBrawler.profile', 'profile')
+      .innerJoin('profileBrawler.profileBrawlerStats', 'profileBrawlerStat')
       .select('CEIL(COUNT(profileBrawler.id) / :pageSize)', 'pageCount')
       .setParameter('pageSize', pageSize)
       .andWhere('profile.tag = :playerTag', { playerTag: profile.tag });
@@ -62,6 +60,7 @@ export class BrawlersListService {
       .createQueryBuilder('profileBrawler')
       .innerJoin('profileBrawler.brawler', 'brawler')
       .innerJoin('profileBrawler.profile', 'profile')
+      .innerJoin('profileBrawler.profileBrawlerStats', 'profileBrawlerStat')
       .addSelect('brawler.label')
       .andWhere('profile.tag = :playerTag', { playerTag: profile.tag });
 
@@ -96,6 +95,10 @@ export class BrawlersListService {
           .from(ProfileBrawler, 'profileBrawlerPage')
           .innerJoin('profileBrawlerPage.brawler', 'brawler')
           .innerJoin('profileBrawlerPage.profile', 'profile')
+          .innerJoin(
+            'profileBrawlerPage.profileBrawlerStats',
+            'profileBrawlerStat',
+          )
           .andWhere('profile.tag = :playerTag', { playerTag: profile.tag });
 
         // Search brawlers
@@ -105,8 +108,7 @@ export class BrawlersListService {
         subQuery = this.orderBrawlersListByValue(
           subQuery,
           orderByValue,
-          orderByDirection,
-          'profileBrawlerPage',
+          orderByDirection
         );
 
         return subQuery.limit(pageSize).offset((page - 1) * pageSize);
@@ -131,17 +133,16 @@ export class BrawlersListService {
     query: SelectQueryBuilder<ProfileBrawler>,
     orderByValue: string,
     orderByDirection: 'ASC' | 'DESC',
-    alias: string = 'profileBrawler',
   ): SelectQueryBuilder<ProfileBrawler> {
     console.log(orderByValue, orderByDirection);
     if (orderByValue && orderByValue.length > 0 && orderByDirection) {
       if (orderByValue === 'label') {
         query.orderBy('brawler.label', orderByDirection);
       } else {
-        query.orderBy(`${alias}.${orderByValue}`, orderByDirection);
+        query.orderBy(`profileBrawlerStat.${orderByValue}`, orderByDirection);
       }
     } else {
-      query.orderBy('trophies', 'DESC');
+      query.orderBy('profileBrawlerStat.trophies', 'DESC');
     }
 
     return query;

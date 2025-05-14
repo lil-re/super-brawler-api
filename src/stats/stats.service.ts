@@ -3,23 +3,17 @@ import { Repository } from 'typeorm';
 import { Stat } from './stat.entity';
 import { CreateStatDto } from './dto/create-stat.dto';
 import { ProfilesService } from '../profiles/profiles.service';
+import { Profile } from '../profiles/profile.entity';
+import { UpdateStatDto } from './dto/update-stat.dto';
 
 @Injectable()
 export class StatsService {
   constructor(
     @Inject('STAT_REPOSITORY')
     private statRepository: Repository<Stat>,
-
-    private profilesService: ProfilesService,
   ) {}
 
-  async createOrUpdate(createStatDto: CreateStatDto) {
-    // Handle Profile
-    const profile = await this.profilesService.findOneByIdAndTag(
-      createStatDto.profileId,
-      createStatDto.tag,
-    );
-
+  async createOrUpdate(profile: Profile, createStatDto: CreateStatDto) {
     // Get Stat for the current day
     const currentStat = await this.statRepository
       .createQueryBuilder('stat')
@@ -36,17 +30,17 @@ export class StatsService {
     }
   }
 
-  async handleNewStat(profileId: string, createStatDto: CreateStatDto) {
+  async handleNewStat(profileId: string, data: CreateStatDto) {
     const newStat = this.statRepository.create({
-      trophies: createStatDto.trophies,
-      highestTrophies: createStatDto.highestTrophies,
-      expLevel: createStatDto.expLevel,
-      expPoints: createStatDto.expPoints,
-      trioVictories: createStatDto.trioVictories,
-      duoVictories: createStatDto.duoVictories,
-      soloVictories: createStatDto.soloVictories,
-      bestRoboRumbleTime: createStatDto.bestRoboRumbleTime,
-      bestTimeAsBigBrawler: createStatDto.bestTimeAsBigBrawler,
+      trophies: data.trophies,
+      highestTrophies: data.highestTrophies,
+      expLevel: data.expLevel,
+      expPoints: data.expPoints,
+      trioVictories: data.trioVictories,
+      duoVictories: data.duoVictories,
+      soloVictories: data.soloVictories,
+      bestRoboRumbleTime: data.bestRoboRumbleTime,
+      bestTimeAsBigBrawler: data.bestTimeAsBigBrawler,
       profile: {
         id: profileId,
       },
@@ -58,18 +52,18 @@ export class StatsService {
     return this.statRepository.save(newStat);
   }
 
-  async handleUpdatedStat(id: number, createStatDto: CreateStatDto) {
+  async handleUpdatedStat(id: number, data: UpdateStatDto) {
     const stat = await this.statRepository.preload({
       id,
-      trophies: createStatDto.trophies,
-      highestTrophies: createStatDto.highestTrophies,
-      expLevel: createStatDto.expLevel,
-      expPoints: createStatDto.expPoints,
-      trioVictories: createStatDto.trioVictories,
-      duoVictories: createStatDto.duoVictories,
-      soloVictories: createStatDto.soloVictories,
-      bestRoboRumbleTime: createStatDto.bestRoboRumbleTime,
-      bestTimeAsBigBrawler: createStatDto.bestTimeAsBigBrawler,
+      trophies: data.trophies,
+      highestTrophies: data.highestTrophies,
+      expLevel: data.expLevel,
+      expPoints: data.expPoints,
+      trioVictories: data.trioVictories,
+      duoVictories: data.duoVictories,
+      soloVictories: data.soloVictories,
+      bestRoboRumbleTime: data.bestRoboRumbleTime,
+      bestTimeAsBigBrawler: data.bestTimeAsBigBrawler,
     });
 
     if (!stat) {

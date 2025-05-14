@@ -39,7 +39,7 @@ export class AuthController {
     const user = await this.usersService.findOne(req.user.sub);
     return {
       ...user,
-      password: undefined
-    }
+      password: undefined,
+    };
   }
 }

@@ -5,35 +5,34 @@ import {
   ManyToMany,
   JoinTable,
   JoinColumn,
-  Column,
+  OneToMany,
 } from 'typeorm';
 import { Profile } from '../profiles/profile.entity';
 import { Brawler } from '../brawlers/brawler.entity';
 import { Gadget } from '../gadgets/gadget.entity';
 import { StarPower } from '../star-powers/star-power.entity';
+import { ProfileBrawlerStat } from '../profile-brawler-stats/profile-brawler-stat.entity';
 
 @Entity()
 export class ProfileBrawler {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  power: number;
+  @OneToMany(
+    () => ProfileBrawlerStat,
+    (profileBrawlerStat) => profileBrawlerStat.profileBrawler,
+  )
+  profileBrawlerStats: ProfileBrawlerStat[];
 
-  @Column()
-  rank: number;
-
-  @Column()
-  trophies: number;
-
-  @Column()
-  highestTrophies: number;
-
-  @ManyToOne(() => Brawler, (brawler) => brawler.profileBrawlers, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Brawler, (brawler) => brawler.profileBrawlers, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'brawlerId' })
   brawler: Brawler;
 
-  @ManyToOne(() => Profile, (profile) => profile.profileBrawlers, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Profile, (profile) => profile.profileBrawlers, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'profileId' })
   profile: Profile;
 

@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  ManyToMany,
+} from 'typeorm';
 import { Brawler } from '../brawlers/brawler.entity';
 import { ProfileBrawler } from '../profile-brawlers/profile-brawler.entity';
 
@@ -13,6 +19,9 @@ export class StarPower {
   @ManyToOne(() => Brawler, (brawler) => brawler.starPowers)
   brawler: Brawler;
 
-  @ManyToMany(() => ProfileBrawler, (profileBrawler) => profileBrawler.starPowers)
+  @ManyToMany(
+    () => ProfileBrawler,
+    (profileBrawler) => profileBrawler.starPowers,
+  )
   profileBrawlers: ProfileBrawler[];
 }

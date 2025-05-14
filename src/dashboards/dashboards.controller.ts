@@ -38,18 +38,18 @@ export class DashboardsController {
     return { profile, stats };
   }
 
-  @Post(':tag/battles-history')
+  @Post(':tag/battle-log')
   async battleLog(
     @Param('tag') tag: string,
     @Body() searchBattleDto: SearchBattleDto,
   ) {
     const profile = await this.profilesService.findOneByTag(tag);
     const brawlers = await this.battleLogService.battleLogBrawlers(profile.id);
-    const history = await this.battleLogService.battleLog(
+    const battles = await this.battleLogService.battleLog(
       profile,
       searchBattleDto,
     );
-    return { profile, brawlers, history };
+    return { profile, brawlers, battles };
   }
 
   @Post(':tag/battles-stats')

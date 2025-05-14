@@ -7,7 +7,7 @@ import { Player } from './player.entity';
 export class PlayersService {
   constructor(
     @Inject('PLAYER_REPOSITORY')
-    private playerRepository: Repository<Player>
+    private playerRepository: Repository<Player>,
   ) {}
 
   async create(createPlayerDto: CreatePlayerDto) {

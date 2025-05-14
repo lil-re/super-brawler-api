@@ -34,7 +34,7 @@ export class BattleLogService {
     };
   }
 
-  async getBattleLogCount(profile: Profile, filters: SearchBattleDto) {
+  private async getBattleLogCount(profile: Profile, filters: SearchBattleDto) {
     const {
       pageSize,
       date,
@@ -74,7 +74,10 @@ export class BattleLogService {
     return await query.getRawOne();
   }
 
-  async getBattleLogResults(profile: Profile, filters: SearchBattleDto) {
+  private async getBattleLogResults(
+    profile: Profile,
+    filters: SearchBattleDto,
+  ) {
     const {
       date,
       dateRange,
@@ -118,7 +121,7 @@ export class BattleLogService {
     return await query.getMany();
   }
 
-  paginateBattleLog(
+  private paginateBattleLog(
     query: SelectQueryBuilder<Battle>,
     profile: Profile,
     filters: SearchBattleDto,
@@ -178,7 +181,7 @@ export class BattleLogService {
       .orderBy('battle.battleTime', 'DESC');
   }
 
-  filterBattleLogByEventType(
+  private filterBattleLogByEventType(
     query: SelectQueryBuilder<Battle>,
     eventType: SearchEventType,
     eventMode: SearchEventMode,
@@ -197,7 +200,7 @@ export class BattleLogService {
     return query;
   }
 
-  filterBattleLogByMapType(
+  private filterBattleLogByMapType(
     query: SelectQueryBuilder<Battle>,
     mapType: SearchMapType,
   ): SelectQueryBuilder<Battle> {
@@ -209,7 +212,7 @@ export class BattleLogService {
     return query;
   }
 
-  filterBattleLogByBrawler(
+  private filterBattleLogByBrawler(
     query: SelectQueryBuilder<Battle>,
     brawlerName: string,
   ): SelectQueryBuilder<Battle> {
@@ -221,7 +224,7 @@ export class BattleLogService {
     return query;
   }
 
-  filterBattleLogByResult(
+  private filterBattleLogByResult(
     query: SelectQueryBuilder<Battle>,
     result: SearchResult,
   ): SelectQueryBuilder<Battle> {
@@ -231,7 +234,7 @@ export class BattleLogService {
     return query;
   }
 
-  filterBattleLogByDate(
+  private filterBattleLogByDate(
     query: SelectQueryBuilder<Battle>,
     date: string,
     dateRange: string,

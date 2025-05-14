@@ -12,10 +12,10 @@ export class GearsService {
     private gearRepository: Repository<Gear>,
   ) {}
 
-  async create(createGearDto: CreateGearDto, profileBrawler: ProfileBrawler) {
+  async create(profileBrawler: ProfileBrawler, data: CreateGearDto) {
     const newGear = this.gearRepository.create({
-      id: createGearDto.id,
-      label: createGearDto.name,
+      id: data.id,
+      label: data.name,
       profileBrawler,
     });
 
